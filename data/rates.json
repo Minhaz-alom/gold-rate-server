@@ -1,38 +1,4 @@
 {
-  "mode": "auto",
-  "updated": "2026-10-05 21:39",
-  "rates": {
-    "gram": {
-      "22k": 19640,
-      "21k": 18760,
-      "18k": 16110,
-      "silver": 210,
-      "trad": 13160
-    },
-    "bhori": {
-      "22k": 229081,
-      "21k": 218817,
-      "18k": 187907,
-      "silver": 2450,
-      "trad": 153498
-    }
-  },
-  "manualRates": {
-    "gram": {
-      "22k": 14500,
-      "21k": 13800,
-      "18k": 11800,
-      "silver": 210,
-      "trad": 9000
-    },
-    "bhori": {
-      "22k": 169000,
-      "21k": 161000,
-      "18k": 137000,
-      "silver": 2450,
-      "trad": 105000
-    }
-  },
   "autoRates": {
     "gram": {
       "22k": 19640,
@@ -49,151 +15,21 @@
       "trad": 153498
     }
   },
-  "settings": {
-    "adminPassword": "admin123",
-    "jwtSecret": "gold-matrix-secret-key-2026",
-    "autoSyncIntervalMinutes": 15,
-    "upstreamUrl": "https://www.goldr.org/price.ultra.js",
-    "gramToBhoriRatio": 11.6638,
-    "lastSyncAttempt": "2026-10-05 21:24",
-    "lastSyncStatus": "success",
-    "lastSyncMessage": "Live rates successfully synced at 2026-10-05 21:24",
-    "adminPasswordHash": "admin123"
+  "rates": {
+    "gram": {
+      "22k": 19640,
+      "21k": 18760,
+      "18k": 16110,
+      "silver": 210,
+      "trad": 13160
+    },
+    "bhori": {
+      "22k": 229081,
+      "21k": 218817,
+      "18k": 187907,
+      "silver": 2450,
+      "trad": 153498
+    }
   },
-  "history": [
-    {
-      "timestamp": "2026-10-05 21:24",
-      "source": "auto",
-      "rates": {
-        "gram": {
-          "22k": 19640,
-          "21k": 18760,
-          "18k": 16110,
-          "silver": 210,
-          "trad": 13160
-        },
-        "bhori": {
-          "22k": 229081,
-          "21k": 218817,
-          "18k": 187907,
-          "silver": 2450,
-          "trad": 153498
-        }
-      }
-    },
-    {
-      "timestamp": "2026-10-05 21:24",
-      "source": "auto",
-      "rates": {
-        "gram": {
-          "22k": 19640,
-          "21k": 18760,
-          "18k": 16110,
-          "silver": 210,
-          "trad": 13160
-        },
-        "bhori": {
-          "22k": 229081,
-          "21k": 218817,
-          "18k": 187907,
-          "silver": 2450,
-          "trad": 153498
-        }
-      },
-      "note": "Mode switched to auto"
-    },
-    {
-      "timestamp": "2026-10-05 21:24",
-      "source": "manual",
-      "rates": {
-        "gram": {
-          "22k": 14500,
-          "21k": 13800,
-          "18k": 11800,
-          "silver": 210,
-          "trad": 9000
-        },
-        "bhori": {
-          "22k": 169000,
-          "21k": 161000,
-          "18k": 137000,
-          "silver": 2450,
-          "trad": 105000
-        }
-      },
-      "note": "Mode switched to manual"
-    },
-    {
-      "timestamp": "2026-10-05 21:14",
-      "source": "manual",
-      "rates": {
-        "gram": {
-          "22k": 14500,
-          "21k": 13800,
-          "18k": 11800,
-          "silver": 210,
-          "trad": 9000
-        },
-        "bhori": {
-          "22k": 169000,
-          "21k": 161000,
-          "18k": 137000,
-          "silver": 2450,
-          "trad": 105000
-        }
-      },
-      "note": "Manual rates saved"
-    },
-    {
-      "timestamp": "2026-10-05 21:14",
-      "source": "manual",
-      "rates": {
-        "gram": {
-          "22k": 14500,
-          "21k": 13800,
-          "18k": 11800,
-          "silver": 210,
-          "trad": 9000
-        },
-        "bhori": {
-          "22k": 169000,
-          "21k": 161000,
-          "18k": 137000,
-          "silver": 2450,
-          "trad": 105000
-        }
-      },
-      "note": "Mode switched to manual"
-    },
-    {
-      "timestamp": "2026-10-05 21:12",
-      "source": "auto",
-      "rates": {
-        "gram": {
-          "22k": 19640,
-          "21k": 18760,
-          "18k": 16110,
-          "silver": 210,
-          "trad": 13160
-        },
-        "bhori": {
-          "22k": 229081,
-          "21k": 218817,
-          "18k": 187907,
-          "silver": 2450,
-          "trad": 153498
-        }
-      }
-    }
-  ],
-  "devices": [
-    {
-      "deviceId": "Client",
-      "ip": "127.0.0.1",
-      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36",
-      "firstSeen": "2026-10-05T15:13:00.813Z",
-      "lastSeen": "2026-10-05T15:21:34.815Z",
-      "requestsCount": 13
-    }
-  ]
+  "updated": "2026-10-05 22:50"
 }

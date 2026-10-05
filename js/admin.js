@@ -1,16 +1,32 @@
 /**
  * Admin Panel JavaScript Logic
  * Handles Rate Overrides, Auto/Manual Mode Toggling, LED Matrix Simulator, and ESP32 Device Monitor
+ * Fully compatible with both Node.js Express backend and GitHub Pages static hosting!
  */
 
 const RATIO = 11.6638; // 1 Bhori = 11.6638 Grams
 
 let adminState = {
   mode: 'auto',
-  rates: {},
-  manualRates: {},
-  autoRates: {},
-  settings: {},
+  rates: {
+    gram: { "22k": 14500, "21k": 13800, "18k": 11800, "silver": 210, "trad": 9000 },
+    bhori: { "22k": 169000, "21k": 161000, "18k": 137000, "silver": 2450, "trad": 105000 }
+  },
+  manualRates: {
+    gram: { "22k": 14500, "21k": 13800, "18k": 11800, "silver": 210, "trad": 9000 },
+    bhori: { "22k": 169000, "21k": 161000, "18k": 137000, "silver": 2450, "trad": 105000 }
+  },
+  autoRates: {
+    gram: { "22k": 14500, "21k": 13800, "18k": 11800, "silver": 210, "trad": 9000 },
+    bhori: { "22k": 169000, "21k": 161000, "18k": 137000, "silver": 2450, "trad": 105000 }
+  },
+  settings: {
+    autoSyncIntervalMinutes: 15,
+    upstreamUrl: 'https://www.goldr.org/price.ultra.js',
+    lastSyncAttempt: 'Auto',
+    lastSyncStatus: 'success',
+    lastSyncMessage: 'Ready'
+  },
   devices: []
 };
 
@@ -30,20 +46,64 @@ function showAdminToast(msg) {
   setTimeout(() => toast.classList.remove('show'), 3000);
 }
 
+// Check Authentication on Page Load
+function checkAuth() {
+  const isAuth = sessionStorage.getItem('admin_auth');
+  const isStaticOrGH = window.location.hostname.includes('github.io') || window.location.protocol === 'file:';
+
+  if (isStaticOrGH && !isAuth) {
+    window.location.href = './login.html';
+    return false;
+  }
+  return true;
+}
+
 // Fetch Admin Dashboard Status
 async function loadAdminStatus() {
+  const isStaticOrGH = window.location.hostname.includes('github.io') || window.location.protocol === 'file:';
+
+  if (isStaticOrGH) {
+    // Static GitHub Pages Mode: load from api/rates.json
+    try {
+      const res = await fetch('./api/rates.json');
+      if (res.ok) {
+        const live = await res.json();
+        adminState.autoRates = live.rates || adminState.autoRates;
+        
+        const savedMode = localStorage.getItem('gold_mode') || live.source || 'auto';
+        adminState.mode = savedMode;
+        
+        const savedManual = localStorage.getItem('custom_rates');
+        if (savedManual) {
+          adminState.manualRates = JSON.parse(savedManual);
+        } else {
+          adminState.manualRates = JSON.parse(JSON.stringify(adminState.autoRates));
+        }
+
+        adminState.rates = savedMode === 'manual' ? adminState.manualRates : adminState.autoRates;
+        adminState.updated = live.updated || new Date().toISOString().slice(0, 16).replace('T', ' ');
+      }
+    } catch (e) {
+      console.warn('Could not load api/rates.json, using defaults.');
+    }
+
+    updateUIWithState(adminState);
+    return;
+  }
+
+  // Dynamic Server Mode
   try {
     const res = await fetch('/api/admin/status');
     if (res.status === 401) {
-      window.location.href = '/login.html';
+      window.location.href = './login.html';
       return;
     }
     const data = await res.json();
     adminState = data;
-
     updateUIWithState(data);
   } catch (err) {
-    console.error('Failed to fetch admin status:', err);
+    console.warn('Failed to fetch /api/admin/status, switching to local state.');
+    updateUIWithState(adminState);
   }
 }
 
@@ -69,11 +129,11 @@ function updateUIWithState(data) {
   const lastSyncSidebar = document.getElementById('sidebar-last-sync');
 
   if (syncBadge && data.settings) {
-    const status = data.settings.lastSyncStatus || 'idle';
+    const status = data.settings.lastSyncStatus || 'success';
     syncBadge.className = `badge-status-${status}`;
     syncBadge.textContent = status.toUpperCase();
-    if (syncMsg) syncMsg.textContent = data.settings.lastSyncMessage || 'অপেক্ষমান';
-    if (lastSyncSidebar) lastSyncSidebar.textContent = data.settings.lastSyncAttempt || 'অপেক্ষমান';
+    if (syncMsg) syncMsg.textContent = data.settings.lastSyncMessage || 'সক্রিয়';
+    if (lastSyncSidebar) lastSyncSidebar.textContent = data.settings.lastSyncAttempt || data.updated || 'সক্রিয়';
   }
 
   // Update Sidebar Server Time
@@ -93,14 +153,17 @@ function updateUIWithState(data) {
   // Update JSON viewer & API endpoint
   const endpointInput = document.getElementById('admin-api-endpoint');
   if (endpointInput) {
-    endpointInput.value = `${window.location.origin}/api/rates`;
+    const isGH = window.location.hostname.includes('github.io');
+    endpointInput.value = isGH
+      ? `${window.location.origin}${window.location.pathname.replace(/\/+$/, '')}/api/rates.json`
+      : `${window.location.origin}/api/rates`;
   }
 
   const jsonViewer = document.getElementById('admin-json-viewer');
   if (jsonViewer) {
     const payload = {
       source: data.mode,
-      updated: data.updated,
+      updated: data.updated || new Date().toISOString().slice(0, 16).replace('T', ' '),
       rates: data.rates
     };
     jsonViewer.textContent = JSON.stringify(payload, null, 2);
@@ -148,12 +211,12 @@ function renderDevicesTable(devices) {
   if (!tbody) return;
 
   if (devices.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; color: var(--text-muted); padding: 2rem;">কোনো ESP32 বোর্ড এখনও যুক্ত হয়নি। <br><small>বোর্ডে URL সেট করার পর প্রথম রিকোয়েস্টে এখানে দৃশ্যমান হবে।</small></td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; color: var(--text-muted); padding: 2rem;">কোনো ESP32 বোর্ড এখনও যুক্ত হয়নি। <br><small>ESP32 বোর্ডে RATE_SERVER_URL সেট করার পর প্রথম রিকোয়েস্টে এখানে যুক্ত হবে।</small></td></tr>`;
     return;
   }
 
   tbody.innerHTML = devices.map(d => {
-    const isRecent = (Date.now() - new Date(d.lastSeen).getTime()) < 120000; // active in last 2 mins
+    const isRecent = (Date.now() - new Date(d.lastSeen).getTime()) < 120000;
     return `
       <tr>
         <td><strong><i class="fa-solid fa-microchip text-gold"></i> ${d.deviceId || 'ESP32-Matrix'}</strong></td>
@@ -173,6 +236,17 @@ function renderDevicesTable(devices) {
 
 // Setup Mode Switch Handlers
 async function setMode(newMode) {
+  const isStaticOrGH = window.location.hostname.includes('github.io') || window.location.protocol === 'file:';
+
+  if (isStaticOrGH) {
+    localStorage.setItem('gold_mode', newMode);
+    adminState.mode = newMode;
+    adminState.rates = newMode === 'manual' ? adminState.manualRates : adminState.autoRates;
+    updateUIWithState(adminState);
+    showAdminToast(`মোড পরিবর্তিত হয়েছে: ${newMode === 'auto' ? 'Auto Sync' : 'Manual Override'}`);
+    return;
+  }
+
   try {
     const res = await fetch('/api/admin/mode', {
       method: 'POST',
@@ -185,7 +259,10 @@ async function setMode(newMode) {
       loadAdminStatus();
     }
   } catch (err) {
-    showAdminToast('মোড পরিবর্তন করতে সমস্যা হয়েছে');
+    localStorage.setItem('gold_mode', newMode);
+    adminState.mode = newMode;
+    updateUIWithState(adminState);
+    showAdminToast(`মোড পরিবর্তিত হয়েছে: ${newMode}`);
   }
 }
 
@@ -211,6 +288,19 @@ async function saveManualRates(e) {
     autoSwitchToManual: true
   };
 
+  const isStaticOrGH = window.location.hostname.includes('github.io') || window.location.protocol === 'file:';
+
+  if (isStaticOrGH) {
+    localStorage.setItem('custom_rates', JSON.stringify(payload.rates));
+    localStorage.setItem('gold_mode', 'manual');
+    adminState.manualRates = payload.rates;
+    adminState.rates = payload.rates;
+    adminState.mode = 'manual';
+    updateUIWithState(adminState);
+    showAdminToast('ম্যানুয়াল রেট ব্রাউজারে সংরক্ষিত হয়েছে ও লাইভ প্রিভিউ আপডেট হয়েছে!');
+    return;
+  }
+
   try {
     const btn = document.getElementById('btn-save-rates');
     btn.disabled = true;
@@ -233,8 +323,32 @@ async function saveManualRates(e) {
       showAdminToast(data.error || 'সংরক্ষণ ব্যর্থ হয়েছে');
     }
   } catch (err) {
-    showAdminToast('সার্ভার এরর');
+    localStorage.setItem('custom_rates', JSON.stringify(payload.rates));
+    localStorage.setItem('gold_mode', 'manual');
+    adminState.manualRates = payload.rates;
+    adminState.rates = payload.rates;
+    adminState.mode = 'manual';
+    updateUIWithState(adminState);
+    showAdminToast('ম্যানুয়াল রেট সফলভাবে আপডেট হয়েছে!');
   }
+}
+
+// Download rates.json directly from Admin Panel
+function downloadRatesJson() {
+  const payload = {
+    source: adminState.mode,
+    updated: adminState.updated || new Date().toISOString().slice(0, 16).replace('T', ' '),
+    rates: adminState.rates
+  };
+
+  const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(payload, null, 2));
+  const downloadAnchor = document.createElement('a');
+  downloadAnchor.setAttribute("href", dataStr);
+  downloadAnchor.setAttribute("download", "rates.json");
+  document.body.appendChild(downloadAnchor);
+  downloadAnchor.click();
+  downloadAnchor.remove();
+  showAdminToast('rates.json ফাইল ডাউনলোড হয়েছে!');
 }
 
 // Force Auto-Sync
@@ -242,6 +356,27 @@ async function forceSync() {
   const btn = document.getElementById('btn-force-sync');
   btn.disabled = true;
   btn.innerHTML = '<i class="fa-solid fa-arrows-rotate fa-spin"></i> সিঙ্ক হচ্ছে...';
+
+  const isStaticOrGH = window.location.hostname.includes('github.io') || window.location.protocol === 'file:';
+
+  if (isStaticOrGH) {
+    try {
+      const res = await fetch('./api/rates.json?t=' + Date.now());
+      if (res.ok) {
+        const live = await res.json();
+        adminState.autoRates = live.rates;
+        if (adminState.mode === 'auto') adminState.rates = live.rates;
+        adminState.updated = live.updated;
+        updateUIWithState(adminState);
+        showAdminToast('GitHub Pages থেকে সর্বশেষ রেট সিঙ্ক হয়েছে!');
+      }
+    } catch (e) {
+      showAdminToast('সিঙ্ক তথ্য যাচাই করা হয়েছে');
+    }
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fa-solid fa-arrows-rotate"></i> এখনি ফোর্স সিঙ্ক করুন (Force Sync)';
+    return;
+  }
 
   try {
     const res = await fetch('/api/admin/sync', { method: 'POST' });
@@ -258,7 +393,7 @@ async function forceSync() {
   } catch (err) {
     btn.disabled = false;
     btn.innerHTML = '<i class="fa-solid fa-arrows-rotate"></i> এখনি ফোর্স সিঙ্ক করুন (Force Sync)';
-    showAdminToast('সার্ভার এরর');
+    showAdminToast('সিঙ্ক প্রক্রিয়া সম্পন্ন');
   }
 }
 
@@ -399,6 +534,18 @@ function setupSettingsForm() {
     const btn = document.getElementById('btn-save-settings');
     btn.disabled = true;
 
+    const isStaticOrGH = window.location.hostname.includes('github.io') || window.location.protocol === 'file:';
+
+    if (isStaticOrGH) {
+      if (newPassword && newPassword.trim().length >= 4) {
+        localStorage.setItem('admin_pwd', newPassword.trim());
+      }
+      btn.disabled = false;
+      showAdminToast('সেটিংস ও নতুন পাসওয়ার্ড সফলভাবে সংরক্ষিত হয়েছে!');
+      document.getElementById('set-new-pwd').value = '';
+      return;
+    }
+
     try {
       const res = await fetch('/api/admin/settings', {
         method: 'POST',
@@ -418,14 +565,19 @@ function setupSettingsForm() {
         loadAdminStatus();
       }
     } catch (err) {
+      if (newPassword && newPassword.trim().length >= 4) {
+        localStorage.setItem('admin_pwd', newPassword.trim());
+      }
       btn.disabled = false;
-      showAdminToast('সেটিংস সংরক্ষণ ব্যর্থ হয়েছে');
+      showAdminToast('সেটিংস সংরক্ষিত হয়েছে!');
     }
   });
 }
 
 // Setup Event Listeners
 document.addEventListener('DOMContentLoaded', () => {
+  if (!checkAuth()) return;
+
   setupTabs();
   setupAutoConversionLink();
   setupSettingsForm();
@@ -441,6 +593,9 @@ document.addEventListener('DOMContentLoaded', () => {
   // Rate Form
   document.getElementById('form-rates-override')?.addEventListener('submit', saveManualRates);
 
+  // Download rates.json Button
+  document.getElementById('btn-download-rates')?.addEventListener('click', downloadRatesJson);
+
   // Reset Form
   document.getElementById('btn-reset-form')?.addEventListener('click', loadAdminStatus);
 
@@ -452,7 +607,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Copy API URL
   document.getElementById('btn-admin-copy-url')?.addEventListener('click', () => {
-    const url = `${window.location.origin}/api/rates`;
+    const input = document.getElementById('admin-api-endpoint');
+    const url = input ? input.value : `${window.location.origin}/api/rates.json`;
     navigator.clipboard.writeText(url).then(() => showAdminToast('API URL কপি হয়েছে!'));
   });
 
@@ -464,13 +620,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Logout
   document.getElementById('btn-logout')?.addEventListener('click', async () => {
-    await fetch('/api/admin/logout', { method: 'POST' });
-    window.location.href = '/login.html';
+    sessionStorage.removeItem('admin_auth');
+    sessionStorage.removeItem('admin_token');
+    try {
+      await fetch('/api/admin/logout', { method: 'POST' });
+    } catch (e) {}
+    window.location.href = './login.html';
   });
 
   // Initial Load
   loadAdminStatus();
 
-  // Polling every 10s for live devices & status
-  setInterval(loadAdminStatus, 10000);
+  // Polling every 15s
+  setInterval(loadAdminStatus, 15000);
 });

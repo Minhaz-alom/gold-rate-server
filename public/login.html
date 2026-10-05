@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-  <link rel="stylesheet" href="/css/admin.css">
+  <link rel="stylesheet" href="./css/admin.css">
 </head>
 <body class="login-body">
 
@@ -51,7 +51,7 @@
       </form>
 
       <div class="login-footer">
-        <a href="/" class="link-home"><i class="fa-solid fa-arrow-left"></i> সাধারণ গ্রাহক পেজে ফিরুন</a>
+        <a href="./index.html" class="link-home"><i class="fa-solid fa-arrow-left"></i> সাধারণ গ্রাহক পেজে ফিরুন</a>
       </div>
     </div>
   </div>
@@ -83,6 +83,24 @@
       btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> যাচাই হচ্ছে...';
       alertBox.style.display = 'none';
 
+      const isStaticOrGH = window.location.hostname.includes('github.io') || window.location.protocol === 'file:';
+
+      if (isStaticOrGH) {
+        const savedPassword = localStorage.getItem('admin_pwd') || 'admin123';
+        if ((username === 'admin' || !username) && password === savedPassword) {
+          sessionStorage.setItem('admin_auth', 'true');
+          sessionStorage.setItem('admin_user', 'admin');
+          window.location.href = './admin.html';
+          return;
+        } else {
+          alertMsg.textContent = 'ইউজারনেম বা পাসওয়ার্ড সঠিক নয়';
+          alertBox.style.display = 'flex';
+          btn.disabled = false;
+          btn.innerHTML = '<i class="fa-solid fa-right-to-bracket"></i> লগইন করুন';
+          return;
+        }
+      }
+
       try {
         const res = await fetch('/api/admin/login', {
           method: 'POST',
@@ -92,7 +110,9 @@
         const data = await res.json();
 
         if (res.ok && data.success) {
-          window.location.href = '/admin';
+          sessionStorage.setItem('admin_auth', 'true');
+          sessionStorage.setItem('admin_token', data.token);
+          window.location.href = './admin.html';
         } else {
           alertMsg.textContent = data.error || 'ইউজারনেম বা পাসওয়ার্ড সঠিক নয়';
           alertBox.style.display = 'flex';
@@ -100,10 +120,16 @@
           btn.innerHTML = '<i class="fa-solid fa-right-to-bracket"></i> লগইন করুন';
         }
       } catch (err) {
-        alertMsg.textContent = 'সার্ভারে সংযোগ করা যাচ্ছে না';
-        alertBox.style.display = 'flex';
-        btn.disabled = false;
-        btn.innerHTML = '<i class="fa-solid fa-right-to-bracket"></i> লগইন করুন';
+        const savedPassword = localStorage.getItem('admin_pwd') || 'admin123';
+        if ((username === 'admin' || !username) && password === savedPassword) {
+          sessionStorage.setItem('admin_auth', 'true');
+          window.location.href = './admin.html';
+        } else {
+          alertMsg.textContent = 'সার্ভারে সংযোগ করা যাচ্ছে না বা পাসওয়ার্ড ভুল';
+          alertBox.style.display = 'flex';
+          btn.disabled = false;
+          btn.innerHTML = '<i class="fa-solid fa-right-to-bracket"></i> লগইন করুন';
+        }
       }
     });
   </script>

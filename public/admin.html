@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&family=Outfit:wght@400;500;600;700;800&family=Fira+Code:wght@400;500;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-  <link rel="stylesheet" href="/css/admin.css">
+  <link rel="stylesheet" href="./css/admin.css">
 </head>
 <body>
 
@@ -34,7 +34,7 @@
           <span class="status-dot"></span>
           <span id="header-mode-text">মোড: অটো সিঙ্ক</span>
         </div>
-        <a href="/" target="_blank" class="btn btn-outline-sm" title="View Public Portal">
+        <a href="./index.html" target="_blank" class="btn btn-outline-sm" title="View Public Portal">
           <i class="fa-solid fa-arrow-up-right-from-square"></i> পাবলিক পেজ
         </a>
         <button id="btn-logout" class="btn btn-danger-sm" title="Logout">
@@ -322,9 +322,12 @@
 
             <div class="form-actions-bar">
               <div class="form-actions-left">
-                <span class="note-text"><i class="fa-solid fa-circle-exclamation text-gold"></i> রেট সংরক্ষণ করলে স্বয়ংক্রিয়ভাবে মোড 'Manual' এ স্যুইচ হবে।</span>
+                <span class="note-text"><i class="fa-solid fa-circle-exclamation text-gold"></i> রেট সংরক্ষণ করলে সাথে সাথে লাইভ প্রিভিউ ও সিমুলেটর আপডেট হবে।</span>
               </div>
               <div class="form-actions-right">
+                <button type="button" id="btn-download-rates" class="btn btn-outline" title="Download rates.json">
+                  <i class="fa-solid fa-download"></i> rates.json ডাউনলোড
+                </button>
                 <button type="button" id="btn-reset-form" class="btn btn-outline">রিসেট</button>
                 <button type="submit" id="btn-save-rates" class="btn btn-gold">
                   <i class="fa-solid fa-floppy-disk"></i> ম্যানুয়াল রেট সংরক্ষণ করুন
@@ -488,7 +491,7 @@
 
             <div class="form-group">
               <label for="set-new-pwd">নতুন অ্যাডমিন পাসওয়ার্ড</label>
-              <input type="password" id="set-new-pwd" class="form-input" placeholder="পরিবর্তন না করতে চাইলে ফাঁকা রাখুন">
+              <input type="password" id="set-new-pwd" class="form-input" placeholder="পরিবর্তন করতে পাসওয়ার্ড লিখুন">
             </div>
 
             <button type="submit" class="btn btn-gold" id="btn-save-settings">
@@ -508,6 +511,6 @@
   </div>
 
   <!-- Admin JS -->
-  <script src="/js/admin.js"></script>
+  <script src="./js/admin.js"></script>
 </body>
 </html>
