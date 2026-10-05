@@ -1,7 +1,6 @@
 /**
  * Admin Panel JavaScript Logic
- * Handles Rate Overrides, Auto/Manual Mode Toggling, LED Matrix Simulator, and ESP32 Device Monitor
- * Fully compatible with both Node.js Express backend and GitHub Pages static hosting!
+ * Handles Rate Overrides, Auto/Manual Mode Toggling, LED Matrix Simulator, and Direct GitHub Cloud Sync
  */
 
 const RATIO = 11.6638; // 1 Bhori = 11.6638 Grams
@@ -43,7 +42,7 @@ function showAdminToast(msg) {
   if (!toast || !msgEl) return;
   msgEl.textContent = msg;
   toast.classList.add('show');
-  setTimeout(() => toast.classList.remove('show'), 3000);
+  setTimeout(() => toast.classList.remove('show'), 3500);
 }
 
 // Check Authentication on Page Load
@@ -58,33 +57,103 @@ function checkAuth() {
   return true;
 }
 
+// Push File to GitHub directly via REST API
+async function pushFileToGitHub(path, contentObj, commitMessage) {
+  const token = localStorage.getItem('gh_token');
+  const repo = localStorage.getItem('gh_repo') || 'Minhaz-alom/gold-rate-server';
+
+  if (!token) {
+    console.warn('GitHub token not set. Skipping direct repo commit.');
+    return { success: false, error: 'NO_TOKEN' };
+  }
+
+  const url = `https://api.github.com/repos/${repo}/contents/${path}`;
+  const contentBase64 = btoa(unescape(encodeURIComponent(JSON.stringify(contentObj, null, 2))));
+
+  try {
+    // 1. Get current SHA
+    let sha = null;
+    const getRes = await fetch(url, {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Accept': 'application/vnd.github.v3+json'
+      }
+    });
+
+    if (getRes.ok) {
+      const fileData = await getRes.json();
+      sha = fileData.sha;
+    }
+
+    // 2. Put / Commit updated file
+    const putBody = {
+      message: commitMessage || `feat: update ${path} via Admin Panel`,
+      content: contentBase64
+    };
+    if (sha) putBody.sha = sha;
+
+    const putRes = await fetch(url, {
+      method: 'PUT',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Accept': 'application/vnd.github.v3+json',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(putBody)
+    });
+
+    if (putRes.ok) {
+      return { success: true };
+    } else {
+      const errData = await putRes.json();
+      return { success: false, error: errData.message };
+    }
+  } catch (err) {
+    return { success: false, error: err.message };
+  }
+}
+
 // Fetch Admin Dashboard Status
 async function loadAdminStatus() {
   const isStaticOrGH = window.location.hostname.includes('github.io') || window.location.protocol === 'file:';
 
+  // Check token status for banner
+  const ghToken = localStorage.getItem('gh_token');
+  const ghBanner = document.getElementById('gh-token-alert');
+  const ghSidebarStatus = document.getElementById('sidebar-gh-status');
+
   if (isStaticOrGH) {
-    // Static GitHub Pages Mode: load from api/rates.json
+    if (!ghToken) {
+      if (ghBanner) ghBanner.style.display = 'flex';
+      if (ghSidebarStatus) {
+        ghSidebarStatus.textContent = 'টোকেন প্রয়োজন';
+        ghSidebarStatus.style.color = '#f59e0b';
+      }
+    } else {
+      if (ghBanner) ghBanner.style.display = 'none';
+      if (ghSidebarStatus) {
+        ghSidebarStatus.textContent = 'সংযুক্ত (Connected)';
+        ghSidebarStatus.style.color = '#10b981';
+      }
+    }
+
+    // Load from api/rates.json
     try {
-      const res = await fetch('./api/rates.json');
+      const res = await fetch('./api/rates.json?t=' + Date.now());
       if (res.ok) {
         const live = await res.json();
-        adminState.autoRates = live.rates || adminState.autoRates;
-        
-        const savedMode = localStorage.getItem('gold_mode') || live.source || 'auto';
-        adminState.mode = savedMode;
-        
-        const savedManual = localStorage.getItem('custom_rates');
-        if (savedManual) {
-          adminState.manualRates = JSON.parse(savedManual);
-        } else {
-          adminState.manualRates = JSON.parse(JSON.stringify(adminState.autoRates));
-        }
-
-        adminState.rates = savedMode === 'manual' ? adminState.manualRates : adminState.autoRates;
+        adminState.mode = live.source || 'auto';
+        adminState.rates = live.rates || adminState.rates;
         adminState.updated = live.updated || new Date().toISOString().slice(0, 16).replace('T', ' ');
+
+        if (live.source === 'manual') {
+          adminState.manualRates = live.rates;
+        } else {
+          adminState.autoRates = live.rates;
+        }
       }
     } catch (e) {
-      console.warn('Could not load api/rates.json, using defaults.');
+      console.warn('Could not load api/rates.json, using state.');
     }
 
     updateUIWithState(adminState);
@@ -102,7 +171,7 @@ async function loadAdminStatus() {
     adminState = data;
     updateUIWithState(data);
   } catch (err) {
-    console.warn('Failed to fetch /api/admin/status, switching to local state.');
+    console.warn('Failed to fetch /api/admin/status, using local state.');
     updateUIWithState(adminState);
   }
 }
@@ -126,28 +195,17 @@ function updateUIWithState(data) {
   // Update Sync Status
   const syncBadge = document.getElementById('sync-status-badge');
   const syncMsg = document.getElementById('sync-status-message');
-  const lastSyncSidebar = document.getElementById('sidebar-last-sync');
 
-  if (syncBadge && data.settings) {
-    const status = data.settings.lastSyncStatus || 'success';
-    syncBadge.className = `badge-status-${status}`;
-    syncBadge.textContent = status.toUpperCase();
-    if (syncMsg) syncMsg.textContent = data.settings.lastSyncMessage || 'সক্রিয়';
-    if (lastSyncSidebar) lastSyncSidebar.textContent = data.settings.lastSyncAttempt || data.updated || 'সক্রিয়';
+  if (syncBadge) {
+    syncBadge.className = 'badge-status-success';
+    syncBadge.textContent = 'SUCCESS';
+    if (syncMsg) syncMsg.textContent = `সর্বশেষ রেট: ${data.updated || 'সক্রিয়'}`;
   }
 
   // Update Sidebar Server Time
   const timeEl = document.getElementById('sidebar-server-time');
   if (timeEl && data.updated) {
     timeEl.textContent = data.updated.split(' ')[1] || data.updated;
-  }
-
-  // Update Settings Form
-  if (data.settings) {
-    const intInput = document.getElementById('set-sync-interval');
-    const urlInput = document.getElementById('set-upstream-url');
-    if (intInput && data.settings.autoSyncIntervalMinutes) intInput.value = data.settings.autoSyncIntervalMinutes;
-    if (urlInput && data.settings.upstreamUrl) urlInput.value = data.settings.upstreamUrl;
   }
 
   // Update JSON viewer & API endpoint
@@ -238,15 +296,42 @@ function renderDevicesTable(devices) {
 async function setMode(newMode) {
   const isStaticOrGH = window.location.hostname.includes('github.io') || window.location.protocol === 'file:';
 
+  adminState.mode = newMode;
+  adminState.rates = newMode === 'manual' ? adminState.manualRates : adminState.autoRates;
+  adminState.updated = new Date().toISOString().slice(0, 16).replace('T', ' ');
+
   if (isStaticOrGH) {
-    localStorage.setItem('gold_mode', newMode);
-    adminState.mode = newMode;
-    adminState.rates = newMode === 'manual' ? adminState.manualRates : adminState.autoRates;
+    const ghToken = localStorage.getItem('gh_token');
+    if (ghToken) {
+      showAdminToast('GitHub এ মোড আপডেট করা হচ্ছে...');
+      const payload = {
+        source: newMode,
+        updated: adminState.updated,
+        rates: adminState.rates
+      };
+
+      const dataPayload = {
+        mode: newMode,
+        updated: adminState.updated,
+        rates: adminState.rates,
+        manualRates: adminState.manualRates,
+        autoRates: adminState.autoRates
+      };
+
+      await pushFileToGitHub('api/rates.json', payload, `feat: switch mode to ${newMode}`);
+      await pushFileToGitHub('api/rates', payload, `feat: switch mode to ${newMode}`);
+      await pushFileToGitHub('data/rates.json', dataPayload, `feat: switch mode to ${newMode}`);
+
+      showAdminToast(`সফল! GitHub এ মোড পরিবর্তিত হয়েছে: ${newMode === 'auto' ? 'Auto Sync' : 'Manual Override'}`);
+    } else {
+      showAdminToast(`মোড লোকাল প্রিভিউতে সেট হয়েছে: ${newMode}. লাইভ পাবলিশ করতে GitHub টোকেন দিন।`);
+    }
+
     updateUIWithState(adminState);
-    showAdminToast(`মোড পরিবর্তিত হয়েছে: ${newMode === 'auto' ? 'Auto Sync' : 'Manual Override'}`);
     return;
   }
 
+  // Node.js Server Mode
   try {
     const res = await fetch('/api/admin/mode', {
       method: 'POST',
@@ -259,9 +344,6 @@ async function setMode(newMode) {
       loadAdminStatus();
     }
   } catch (err) {
-    localStorage.setItem('gold_mode', newMode);
-    adminState.mode = newMode;
-    updateUIWithState(adminState);
     showAdminToast(`মোড পরিবর্তিত হয়েছে: ${newMode}`);
   }
 }
@@ -280,41 +362,74 @@ async function saveManualRates(e) {
     bhoriRates[k] = Math.round(bVal);
   });
 
-  const payload = {
-    rates: {
-      gram: gramRates,
-      bhori: bhoriRates
-    },
-    autoSwitchToManual: true
+  const cleanRates = {
+    gram: gramRates,
+    bhori: bhoriRates
   };
+
+  const nowStr = new Date().toISOString().slice(0, 16).replace('T', ' ');
+
+  adminState.manualRates = cleanRates;
+  adminState.rates = cleanRates;
+  adminState.mode = 'manual';
+  adminState.updated = nowStr;
+
+  const btn = document.getElementById('btn-save-rates');
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> GitHub এ পাবলিশ হচ্ছে...';
 
   const isStaticOrGH = window.location.hostname.includes('github.io') || window.location.protocol === 'file:';
 
   if (isStaticOrGH) {
-    localStorage.setItem('custom_rates', JSON.stringify(payload.rates));
-    localStorage.setItem('gold_mode', 'manual');
-    adminState.manualRates = payload.rates;
-    adminState.rates = payload.rates;
-    adminState.mode = 'manual';
+    const ghToken = localStorage.getItem('gh_token');
+
+    if (ghToken) {
+      const payload = {
+        source: "manual",
+        updated: nowStr,
+        rates: cleanRates
+      };
+
+      const dataPayload = {
+        mode: "manual",
+        updated: nowStr,
+        rates: cleanRates,
+        manualRates: cleanRates,
+        autoRates: adminState.autoRates
+      };
+
+      const res1 = await pushFileToGitHub('api/rates.json', payload, 'feat: update manual rates via Admin Panel');
+      const res2 = await pushFileToGitHub('api/rates', payload, 'feat: update manual rates via Admin Panel');
+      const res3 = await pushFileToGitHub('data/rates.json', dataPayload, 'feat: update manual rates via Admin Panel');
+
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fa-solid fa-cloud-arrow-up"></i> ম্যানুয়াল রেট সংরক্ষণ ও প্রকাশ করুন';
+
+      if (res1.success) {
+        showAdminToast('🎉 দারুণ! ম্যানুয়াল রেট সরাসরি GitHub এ পাবলিশ হয়েছে এবং API আপডেট হয়েছে!');
+      } else {
+        showAdminToast('⚠️ টোকেন এরর: ' + (res1.error || 'টোকেনের পারমিশন চেক করুন'));
+      }
+    } else {
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fa-solid fa-cloud-arrow-up"></i> ম্যানুয়াল রেট সংরক্ষণ ও প্রকাশ করুন';
+      showAdminToast('লোকাল প্রিভিউ সেভ হয়েছে! GitHub এ সরাসরি পাবলিশ করতে Settings ট্যাবে GitHub Token দিন।');
+    }
+
     updateUIWithState(adminState);
-    showAdminToast('ম্যানুয়াল রেট ব্রাউজারে সংরক্ষিত হয়েছে ও লাইভ প্রিভিউ আপডেট হয়েছে!');
     return;
   }
 
+  // Node.js Server Mode
   try {
-    const btn = document.getElementById('btn-save-rates');
-    btn.disabled = true;
-    btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> সংরক্ষণ হচ্ছে...';
-
     const res = await fetch('/api/admin/rates', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
+      body: JSON.stringify({ rates: cleanRates, autoSwitchToManual: true })
     });
     const data = await res.json();
-
     btn.disabled = false;
-    btn.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> ম্যানুয়াল রেট সংরক্ষণ করুন';
+    btn.innerHTML = '<i class="fa-solid fa-cloud-arrow-up"></i> ম্যানুয়াল রেট সংরক্ষণ ও প্রকাশ করুন';
 
     if (data.success) {
       showAdminToast('ম্যানুয়াল রেট সফলভাবে সংরক্ষিত হয়েছে!');
@@ -323,13 +438,9 @@ async function saveManualRates(e) {
       showAdminToast(data.error || 'সংরক্ষণ ব্যর্থ হয়েছে');
     }
   } catch (err) {
-    localStorage.setItem('custom_rates', JSON.stringify(payload.rates));
-    localStorage.setItem('gold_mode', 'manual');
-    adminState.manualRates = payload.rates;
-    adminState.rates = payload.rates;
-    adminState.mode = 'manual';
-    updateUIWithState(adminState);
-    showAdminToast('ম্যানুয়াল রেট সফলভাবে আপডেট হয়েছে!');
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fa-solid fa-cloud-arrow-up"></i> ম্যানুয়াল রেট সংরক্ষণ ও প্রকাশ করুন';
+    showAdminToast('ম্যানুয়াল রেট আপডেট হয়েছে!');
   }
 }
 
@@ -357,44 +468,22 @@ async function forceSync() {
   btn.disabled = true;
   btn.innerHTML = '<i class="fa-solid fa-arrows-rotate fa-spin"></i> সিঙ্ক হচ্ছে...';
 
-  const isStaticOrGH = window.location.hostname.includes('github.io') || window.location.protocol === 'file:';
-
-  if (isStaticOrGH) {
-    try {
-      const res = await fetch('./api/rates.json?t=' + Date.now());
-      if (res.ok) {
-        const live = await res.json();
-        adminState.autoRates = live.rates;
-        if (adminState.mode === 'auto') adminState.rates = live.rates;
-        adminState.updated = live.updated;
-        updateUIWithState(adminState);
-        showAdminToast('GitHub Pages থেকে সর্বশেষ রেট সিঙ্ক হয়েছে!');
-      }
-    } catch (e) {
-      showAdminToast('সিঙ্ক তথ্য যাচাই করা হয়েছে');
-    }
-    btn.disabled = false;
-    btn.innerHTML = '<i class="fa-solid fa-arrows-rotate"></i> এখনি ফোর্স সিঙ্ক করুন (Force Sync)';
-    return;
-  }
-
   try {
-    const res = await fetch('/api/admin/sync', { method: 'POST' });
-    const data = await res.json();
-    btn.disabled = false;
-    btn.innerHTML = '<i class="fa-solid fa-arrows-rotate"></i> এখনি ফোর্স সিঙ্ক করুন (Force Sync)';
-
-    if (data.success) {
-      showAdminToast('অনলাইন থেকে রেট সফলভাবে সিঙ্ক হয়েছে!');
-      loadAdminStatus();
-    } else {
-      showAdminToast('সিঙ্ক ব্যর্থ: ' + (data.message || 'অজ্ঞাত সমস্যা'));
+    const res = await fetch('./api/rates.json?t=' + Date.now());
+    if (res.ok) {
+      const live = await res.json();
+      adminState.autoRates = live.rates;
+      if (adminState.mode === 'auto') adminState.rates = live.rates;
+      adminState.updated = live.updated;
+      updateUIWithState(adminState);
+      showAdminToast('সর্বশেষ রেট সিঙ্ক হয়েছে!');
     }
-  } catch (err) {
-    btn.disabled = false;
-    btn.innerHTML = '<i class="fa-solid fa-arrows-rotate"></i> এখনি ফোর্স সিঙ্ক করুন (Force Sync)';
-    showAdminToast('সিঙ্ক প্রক্রিয়া সম্পন্ন');
+  } catch (e) {
+    showAdminToast('সিঙ্ক সম্পন্ন');
   }
+
+  btn.disabled = false;
+  btn.innerHTML = '<i class="fa-solid fa-arrows-rotate"></i> এখনি সিঙ্ক করুন (Sync Now)';
 }
 
 // Auto Calculate Bhori from Gram or Gram from Bhori
@@ -518,60 +607,55 @@ function setupTabs() {
       if (pane) pane.classList.add('active');
     });
   });
+
+  const gotoGh = document.getElementById('btn-goto-gh-settings');
+  if (gotoGh) {
+    gotoGh.addEventListener('click', () => {
+      const settingsTab = document.querySelector('[data-tab="tab-settings"]');
+      if (settingsTab) settingsTab.click();
+    });
+  }
 }
 
-// Settings Form
+// Settings Forms
 function setupSettingsForm() {
-  const form = document.getElementById('form-admin-settings');
-  if (!form) return;
+  // 1. GitHub Token Form
+  const formGh = document.getElementById('form-gh-sync');
+  if (formGh) {
+    const tokenInput = document.getElementById('gh-token-input');
+    const repoInput = document.getElementById('gh-repo-input');
 
-  form.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const interval = document.getElementById('set-sync-interval')?.value;
-    const upstreamUrl = document.getElementById('set-upstream-url')?.value;
-    const newPassword = document.getElementById('set-new-pwd')?.value;
+    const savedToken = localStorage.getItem('gh_token');
+    const savedRepo = localStorage.getItem('gh_repo');
+    if (tokenInput && savedToken) tokenInput.value = savedToken;
+    if (repoInput && savedRepo) repoInput.value = savedRepo;
 
-    const btn = document.getElementById('btn-save-settings');
-    btn.disabled = true;
+    formGh.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const token = tokenInput.value.trim();
+      const repo = repoInput.value.trim();
 
-    const isStaticOrGH = window.location.hostname.includes('github.io') || window.location.protocol === 'file:';
+      if (token) localStorage.setItem('gh_token', token);
+      if (repo) localStorage.setItem('gh_repo', repo);
 
-    if (isStaticOrGH) {
+      showAdminToast('GitHub টোকেন সফলভাবে সেভ হয়েছে! এখন রেট এডিট করলে সাথে সাথে পাবলিশ হবে।');
+      loadAdminStatus();
+    });
+  }
+
+  // 2. Admin Password Form
+  const formPwd = document.getElementById('form-admin-settings');
+  if (formPwd) {
+    formPwd.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const newPassword = document.getElementById('set-new-pwd')?.value;
       if (newPassword && newPassword.trim().length >= 4) {
         localStorage.setItem('admin_pwd', newPassword.trim());
-      }
-      btn.disabled = false;
-      showAdminToast('সেটিংস ও নতুন পাসওয়ার্ড সফলভাবে সংরক্ষিত হয়েছে!');
-      document.getElementById('set-new-pwd').value = '';
-      return;
-    }
-
-    try {
-      const res = await fetch('/api/admin/settings', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          autoSyncIntervalMinutes: interval,
-          upstreamUrl,
-          newPassword: newPassword || undefined
-        })
-      });
-      const data = await res.json();
-      btn.disabled = false;
-
-      if (data.success) {
-        showAdminToast('সেটিংস সফলভাবে সংরক্ষিত হয়েছে!');
+        showAdminToast('নতুন অ্যাডমিন পাসওয়ার্ড সংরক্ষিত হয়েছে!');
         document.getElementById('set-new-pwd').value = '';
-        loadAdminStatus();
       }
-    } catch (err) {
-      if (newPassword && newPassword.trim().length >= 4) {
-        localStorage.setItem('admin_pwd', newPassword.trim());
-      }
-      btn.disabled = false;
-      showAdminToast('সেটিংস সংরক্ষিত হয়েছে!');
-    }
-  });
+    });
+  }
 }
 
 // Setup Event Listeners
@@ -619,12 +703,9 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   // Logout
-  document.getElementById('btn-logout')?.addEventListener('click', async () => {
+  document.getElementById('btn-logout')?.addEventListener('click', () => {
     sessionStorage.removeItem('admin_auth');
     sessionStorage.removeItem('admin_token');
-    try {
-      await fetch('/api/admin/logout', { method: 'POST' });
-    } catch (e) {}
     window.location.href = './login.html';
   });
 

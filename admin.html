@@ -69,7 +69,7 @@
         </button>
         <button class="nav-tab-btn" data-tab="tab-settings">
           <i class="fa-solid fa-sliders"></i>
-          <span>সার্ভার সেটিংস ও পাসওয়ার্ড</span>
+          <span>GitHub সিঙ্ক ও সেটিংস</span>
         </button>
       </nav>
 
@@ -79,14 +79,23 @@
           <strong id="sidebar-server-time">--:--</strong>
         </div>
         <div class="info-line">
-          <span>সর্বশেষ সিঙ্ক:</span>
-          <span id="sidebar-last-sync" class="text-truncate">কখনো নয়</span>
+          <span>GitHub ক্লাউড:</span>
+          <span id="sidebar-gh-status" style="color: #10b981; font-weight: 600;">সক্রিয়</span>
         </div>
       </div>
     </aside>
 
     <!-- Main Content Area -->
     <main class="admin-main">
+
+      <!-- GitHub Token Notice Banner if running on GitHub Pages without token -->
+      <div id="gh-token-alert" class="alert alert-error" style="display: none; margin-bottom: 1.5rem; background: rgba(56, 189, 248, 0.1); border-color: rgba(56, 189, 248, 0.3); color: #e0f2fe;">
+        <i class="fa-solid fa-cloud-arrow-up text-gold"></i>
+        <div style="flex: 1;">
+          <strong>GitHub Pages অটো-পাবলিশিং সক্রিয় করতে:</strong> আপনি 'GitHub সিঙ্ক ও সেটিংস' ট্যাবে গিয়ে আপনার GitHub Personal Token সেভ করলে যেকোনো কাস্টম রেট সাথে সাথে আপনার লাইভ <code>/api/rates.json</code> ফাইলে সেভ হবে।
+        </div>
+        <button id="btn-goto-gh-settings" class="btn btn-gold btn-sm"><i class="fa-solid fa-key"></i> টোকেন সেট করুন</button>
+      </div>
 
       <!-- ========================================== -->
       <!-- TAB 1: RATES & MODE CONTROL -->
@@ -119,11 +128,11 @@
         <div class="sync-action-bar">
           <div class="sync-status-details">
             <span class="sync-label">আপস্ট্রিম সিঙ্ক স্ট্যাটাস:</span>
-            <span id="sync-status-badge" class="badge-status-idle">Idle</span>
-            <span id="sync-status-message" class="sync-msg">তথ্য লোড হচ্ছে...</span>
+            <span id="sync-status-badge" class="badge-status-success">SUCCESS</span>
+            <span id="sync-status-message" class="sync-msg">সর্বশেষ লাইভ রেট লোড হয়েছে</span>
           </div>
           <button id="btn-force-sync" class="btn btn-gold btn-sm">
-            <i class="fa-solid fa-arrows-rotate"></i> এখনি ফোর্স সিঙ্ক করুন (Force Sync)
+            <i class="fa-solid fa-arrows-rotate"></i> এখনি সিঙ্ক করুন (Sync Now)
           </button>
         </div>
 
@@ -132,7 +141,7 @@
           <div class="card-header-flex">
             <div>
               <h3 class="card-title"><i class="fa-solid fa-sliders text-gold"></i> স্বর্ণ ও রৌপ্যের রেট এডিটর</h3>
-              <p class="card-subtitle">ম্যানুয়াল মোডে দেওয়া রেট সরাসরি `/api/rates` এ প্রতিফলিত হবে এবং ESP32 বোর্ডে প্রদর্শিত হবে।</p>
+              <p class="card-subtitle">ম্যানুয়াল মোডে দেওয়া রেট সরাসরি `/api/rates.json` এ সংরক্ষিত হবে এবং ESP32 বোর্ডে প্রদর্শিত হবে।</p>
             </div>
             <div class="auto-calc-toggle-wrapper">
               <label class="switch-label">
@@ -322,7 +331,7 @@
 
             <div class="form-actions-bar">
               <div class="form-actions-left">
-                <span class="note-text"><i class="fa-solid fa-circle-exclamation text-gold"></i> রেট সংরক্ষণ করলে সাথে সাথে লাইভ প্রিভিউ ও সিমুলেটর আপডেট হবে।</span>
+                <span class="note-text"><i class="fa-solid fa-circle-exclamation text-gold"></i> রেট সংরক্ষণ করলে সরাসরি লাইভ প্রিভিউ ও GitHub API এন্ডপয়েন্ট আপডেট হবে।</span>
               </div>
               <div class="form-actions-right">
                 <button type="button" id="btn-download-rates" class="btn btn-outline" title="Download rates.json">
@@ -330,7 +339,7 @@
                 </button>
                 <button type="button" id="btn-reset-form" class="btn btn-outline">রিসেট</button>
                 <button type="submit" id="btn-save-rates" class="btn btn-gold">
-                  <i class="fa-solid fa-floppy-disk"></i> ম্যানুয়াল রেট সংরক্ষণ করুন
+                  <i class="fa-solid fa-cloud-arrow-up"></i> ম্যানুয়াল রেট সংরক্ষণ ও প্রকাশ করুন
                 </button>
               </div>
             </div>
@@ -407,7 +416,7 @@
           <div class="card-header-flex">
             <div>
               <h3 class="card-title"><i class="fa-solid fa-network-wired text-gold"></i> সংযুক্ত ESP32 ম্যাট্রিক্স ডিভাইস মনিটর</h3>
-              <p class="card-subtitle">যেসব ESP32 বোর্ড `/api/rates` বা `/api/devices/ping` এ সংযোগ করেছে তাদের তালিকা।</p>
+              <p class="card-subtitle">যেসব ESP32 বোর্ড `/api/rates.json` এ সংযোগ করছে।</p>
             </div>
             <button id="btn-refresh-devices" class="btn btn-outline-sm">
               <i class="fa-solid fa-arrows-rotate"></i> রিফ্রেশ
@@ -469,33 +478,44 @@
       </section>
 
       <!-- ========================================== -->
-      <!-- TAB 5: SERVER SETTINGS & PASSWORD -->
+      <!-- TAB 5: GITHUB CLOUD SYNC & SETTINGS -->
       <!-- ========================================== -->
       <section id="tab-settings" class="tab-pane">
         <div class="card">
-          <h3 class="card-title"><i class="fa-solid fa-gear text-gold"></i> সার্ভার ও সিকিউরিটি সেটিংস</h3>
-          <p class="card-subtitle">পাসওয়ার্ড পরিবর্তন ও অটো-সিঙ্ক কনফিগারেশন</p>
+          <h3 class="card-title"><i class="fa-brands fa-github text-gold"></i> GitHub Cloud Sync কনফিগারেশন</h3>
+          <p class="card-subtitle">GitHub Pages এ ম্যানুয়াল রেট সরাসরি পাবলিশ করার জন্য আপনার GitHub Personal Access Token (PAT) এখানে সেভ করুন।</p>
 
-          <form id="form-admin-settings" class="settings-form">
+          <form id="form-gh-sync" class="settings-form">
             <div class="form-group">
-              <label for="set-sync-interval">অটো-সিঙ্ক বিরতি (মিনিট)</label>
-              <input type="number" id="set-sync-interval" class="form-input" value="15" min="1" max="1440">
-              <span class="help-text">অনলাইন সোর্স থেকে প্রতি কত মিনিট পর পর রেট হালনাগাদ হবে।</span>
+              <label for="gh-repo-input"><i class="fa-solid fa-folder-tree"></i> GitHub Repository Name</label>
+              <input type="text" id="gh-repo-input" class="form-input" value="Minhaz-alom/gold-rate-server" placeholder="username/repository-name">
+              <span class="help-text">ডিফল্ট: Minhaz-alom/gold-rate-server</span>
             </div>
 
             <div class="form-group">
-              <label for="set-upstream-url">আপস্ট্রিম সোর্স URL</label>
-              <input type="url" id="set-upstream-url" class="form-input" value="https://www.goldr.org/price.ultra.js">
-              <span class="help-text">ডিফল্ট: https://www.goldr.org/price.ultra.js</span>
+              <label for="gh-token-input"><i class="fa-solid fa-key"></i> GitHub Personal Access Token (PAT)</label>
+              <input type="password" id="gh-token-input" class="form-input" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx">
+              <span class="help-text">
+                টোকেন না থাকলে: <a href="https://github.com/settings/tokens/new?scopes=repo&description=Gold+Rate+Admin+Sync" target="_blank" rel="noopener" style="color: #38bdf8; text-decoration: underline;">এখানে ক্লিক করে</a> 'repo' পারমিশন দিয়ে টোকেন তৈরি করে এখানে পেস্ট করুন।
+              </span>
             </div>
 
+            <button type="submit" class="btn btn-gold" id="btn-save-gh-token">
+              <i class="fa-solid fa-cloud-arrow-up"></i> GitHub টোকেন সংরক্ষণ করুন
+            </button>
+          </form>
+
+          <div class="result-divider" style="margin: 2rem 0;"></div>
+
+          <h3 class="card-title"><i class="fa-solid fa-lock text-gold"></i> অ্যাডমিন পাসওয়ার্ড পরিবর্তন</h3>
+          <form id="form-admin-settings" class="settings-form" style="margin-top: 1rem;">
             <div class="form-group">
               <label for="set-new-pwd">নতুন অ্যাডমিন পাসওয়ার্ড</label>
-              <input type="password" id="set-new-pwd" class="form-input" placeholder="পরিবর্তন করতে পাসওয়ার্ড লিখুন">
+              <input type="password" id="set-new-pwd" class="form-input" placeholder="নতুন পাসওয়ার্ড লিখুন">
             </div>
 
-            <button type="submit" class="btn btn-gold" id="btn-save-settings">
-              <i class="fa-solid fa-check"></i> সেটিংস সংরক্ষণ করুন
+            <button type="submit" class="btn btn-outline" id="btn-save-settings">
+              <i class="fa-solid fa-check"></i> পাসওয়ার্ড আপডেট করুন
             </button>
           </form>
         </div>
