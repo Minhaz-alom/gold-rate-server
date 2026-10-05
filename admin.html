@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>অ্যাডমিন ড্যাশবোর্ড | Gold Rate Middleman Server</title>
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&family=Outfit:wght@400;500;600;700;800&family=Fira+Code:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="stylesheet" href="/css/admin.css">
+</head>
+<body>
+
+  <div class="ambient-glow glow-top-left"></div>
+  <div class="ambient-glow glow-bottom-right"></div>
+
+  <!-- Admin Navigation Header -->
+  <header class="admin-header">
+    <div class="container-fluid header-fluid">
+      <div class="brand-group">
+        <div class="admin-logo">
+          <i class="fa-solid fa-server"></i>
+        </div>
+        <div>
+          <h1 class="admin-title">গোল্ড রেট কন্ট্রোল প্যানেল</h1>
+          <span class="admin-badge"><i class="fa-solid fa-microchip"></i> ESP32 HUB75 Matrix Middleman</span>
+        </div>
+      </div>
+
+      <div class="header-right-actions">
+        <div class="status-indicator-badge" id="source-status-badge">
+          <span class="status-dot"></span>
+          <span id="header-mode-text">মোড: অটো সিঙ্ক</span>
+        </div>
+        <a href="/" target="_blank" class="btn btn-outline-sm" title="View Public Portal">
+          <i class="fa-solid fa-arrow-up-right-from-square"></i> পাবলিক পেজ
+        </a>
+        <button id="btn-logout" class="btn btn-danger-sm" title="Logout">
+          <i class="fa-solid fa-power-off"></i> লগআউট
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Admin Layout Container -->
+  <div class="admin-layout">
+    
+    <!-- Sidebar Navigation -->
+    <aside class="admin-sidebar">
+      <nav class="sidebar-nav">
+        <button class="nav-tab-btn active" data-tab="tab-rates">
+          <i class="fa-solid fa-coins"></i>
+          <span>রেট কন্ট্রোল ও মোড</span>
+        </button>
+        <button class="nav-tab-btn" data-tab="tab-simulator">
+          <i class="fa-solid fa-tv"></i>
+          <span>HUB75 LED সিমুলেটর</span>
+        </button>
+        <button class="nav-tab-btn" data-tab="tab-devices">
+          <i class="fa-solid fa-network-wired"></i>
+          <span>সংযুক্ত ESP32 বোর্ড</span>
+          <span class="badge-count" id="sidebar-device-count">0</span>
+        </button>
+        <button class="nav-tab-btn" data-tab="tab-api">
+          <i class="fa-solid fa-code"></i>
+          <span>API এন্ডপয়েন্ট ও JSON</span>
+        </button>
+        <button class="nav-tab-btn" data-tab="tab-settings">
+          <i class="fa-solid fa-sliders"></i>
+          <span>সার্ভার সেটিংস ও পাসওয়ার্ড</span>
+        </button>
+      </nav>
+
+      <div class="sidebar-info-box">
+        <div class="info-line">
+          <span>সার্ভার সময়:</span>
+          <strong id="sidebar-server-time">--:--</strong>
+        </div>
+        <div class="info-line">
+          <span>সর্বশেষ সিঙ্ক:</span>
+          <span id="sidebar-last-sync" class="text-truncate">কখনো নয়</span>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="admin-main">
+
+      <!-- ========================================== -->
+      <!-- TAB 1: RATES & MODE CONTROL -->
+      <!-- ========================================== -->
+      <section id="tab-rates" class="tab-pane active">
+        
+        <!-- Mode Switcher Banner -->
+        <div class="mode-switcher-card">
+          <div class="mode-info">
+            <div class="mode-icon-box" id="mode-icon-display">
+              <i class="fa-solid fa-bolt text-gold"></i>
+            </div>
+            <div>
+              <h3 id="mode-title-display">বর্তমান রেট সোর্স মোড: <span class="highlight-text">অটো সিঙ্ক (Auto Sync)</span></h3>
+              <p id="mode-desc-display">সার্ভার স্বয়ংক্রিয়ভাবে অনলাইন সোর্স থেকে লাইভ রেট সংগ্রহ করছে এবং ESP32 ডিভাইসে সরবরাহ করছে।</p>
+            </div>
+          </div>
+
+          <div class="mode-toggle-group">
+            <button id="btn-set-mode-auto" class="btn-mode-toggle active">
+              <i class="fa-solid fa-bolt"></i> ⚡ Auto Mode (Web Sync)
+            </button>
+            <button id="btn-set-mode-manual" class="btn-mode-toggle">
+              <i class="fa-solid fa-pen-to-square"></i> ✍️ Manual Override
+            </button>
+          </div>
+        </div>
+
+        <!-- Auto Sync Controller Bar -->
+        <div class="sync-action-bar">
+          <div class="sync-status-details">
+            <span class="sync-label">আপস্ট্রিম সিঙ্ক স্ট্যাটাস:</span>
+            <span id="sync-status-badge" class="badge-status-idle">Idle</span>
+            <span id="sync-status-message" class="sync-msg">তথ্য লোড হচ্ছে...</span>
+          </div>
+          <button id="btn-force-sync" class="btn btn-gold btn-sm">
+            <i class="fa-solid fa-arrows-rotate"></i> এখনি ফোর্স সিঙ্ক করুন (Force Sync)
+          </button>
+        </div>
+
+        <!-- Manual Rate Override Form -->
+        <div class="card rates-editor-card">
+          <div class="card-header-flex">
+            <div>
+              <h3 class="card-title"><i class="fa-solid fa-sliders text-gold"></i> স্বর্ণ ও রৌপ্যের রেট এডিটর</h3>
+              <p class="card-subtitle">ম্যানুয়াল মোডে দেওয়া রেট সরাসরি `/api/rates` এ প্রতিফলিত হবে এবং ESP32 বোর্ডে প্রদর্শিত হবে।</p>
+            </div>
+            <div class="auto-calc-toggle-wrapper">
+              <label class="switch-label">
+                <input type="checkbox" id="chk-auto-calc" checked>
+                <span class="switch-slider"></span>
+                <span class="switch-text">গ্রাম ও ভরি অটো-কনভার্ট লিংক (১ ভরি = ১১.৬৬৪ গ্রাম)</span>
+              </label>
+            </div>
+          </div>
+
+          <form id="form-rates-override">
+            <div class="rates-table-wrapper">
+              <table class="admin-rates-table">
+                <thead>
+                  <tr>
+                    <th>ধাতু ও ক্যারেট</th>
+                    <th>প্রতি গ্রাম রেট (৳ / Gram)</th>
+                    <th>প্রতি ভরি রেট (৳ / Bhori)</th>
+                    <th>দ্রুত অ্যাডজাস্টমেন্ট</th>
+                  </tr>
+                </thead>
+                <tbody>
+
+                  <!-- 22 Karat -->
+                  <tr class="rate-row-22k">
+                    <td>
+                      <div class="karat-label-cell">
+                        <span class="karat-badge bg-gold">22K</span>
+                        <div>
+                          <strong>২২ ক্যারেট সোনা</strong>
+                          <span class="row-sub">Cadmium Hallmark 91.6%</span>
+                        </div>
+                      </div>
+                    </td>
+                    <td>
+                      <div class="input-unit-wrapper">
+                        <span class="unit-prefix">৳</span>
+                        <input type="number" id="input-gram-22k" class="admin-input rate-gram" data-karat="22k" value="14500" min="1" step="1" required>
+                      </div>
+                    </td>
+                    <td>
+                      <div class="input-unit-wrapper">
+                        <span class="unit-prefix">৳</span>
+                        <input type="number" id="input-bhori-22k" class="admin-input rate-bhori" data-karat="22k" value="169000" min="1" step="1" required>
+                      </div>
+                    </td>
+                    <td>
+                      <div class="quick-adjust-group">
+                        <button type="button" class="btn-adj" data-karat="22k" data-adj="+500">+৫০০</button>
+                        <button type="button" class="btn-adj" data-karat="22k" data-adj="-500">-৫০০</button>
+                        <button type="button" class="btn-adj" data-karat="22k" data-adj="+1000">+১০০০</button>
+                      </div>
+                    </td>
+                  </tr>
+
+                  <!-- 21 Karat -->
+                  <tr class="rate-row-21k">
+                    <td>
+                      <div class="karat-label-cell">
+                        <span class="karat-badge bg-blue">21K</span>
+                        <div>
+                          <strong>২১ ক্যারেট সোনা</strong>
+                          <span class="row-sub">Cadmium Hallmark 87.5%</span>
+                        </div>
+                      </div>
+                    </td>
+                    <td>
+                      <div class="input-unit-wrapper">
+                        <span class="unit-prefix">৳</span>
+                        <input type="number" id="input-gram-21k" class="admin-input rate-gram" data-karat="21k" value="13800" min="1" step="1" required>
+                      </div>
+                    </td>
+                    <td>
+                      <div class="input-unit-wrapper">
+                        <span class="unit-prefix">৳</span>
+                        <input type="number" id="input-bhori-21k" class="admin-input rate-bhori" data-karat="21k" value="161000" min="1" step="1" required>
+                      </div>
+                    </td>
+                    <td>
+                      <div class="quick-adjust-group">
+                        <button type="button" class="btn-adj" data-karat="21k" data-adj="+500">+৫০০</button>
+                        <button type="button" class="btn-adj" data-karat="21k" data-adj="-500">-৫০০</button>
+                        <button type="button" class="btn-adj" data-karat="21k" data-adj="+1000">+১০০০</button>
+                      </div>
+                    </td>
+                  </tr>
+
+                  <!-- 18 Karat -->
+                  <tr class="rate-row-18k">
+                    <td>
+                      <div class="karat-label-cell">
+                        <span class="karat-badge bg-pink">18K</span>
+                        <div>
+                          <strong>১৮ ক্যারেট সোনা</strong>
+                          <span class="row-sub">Jewelry Gold 75.0%</span>
+                        </div>
+                      </div>
+                    </td>
+                    <td>
+                      <div class="input-unit-wrapper">
+                        <span class="unit-prefix">৳</span>
+                        <input type="number" id="input-gram-18k" class="admin-input rate-gram" data-karat="18k" value="11800" min="1" step="1" required>
+                      </div>
+                    </td>
+                    <td>
+                      <div class="input-unit-wrapper">
+                        <span class="unit-prefix">৳</span>
+                        <input type="number" id="input-bhori-18k" class="admin-input rate-bhori" data-karat="18k" value="137000" min="1" step="1" required>
+                      </div>
+                    </td>
+                    <td>
+                      <div class="quick-adjust-group">
+                        <button type="button" class="btn-adj" data-karat="18k" data-adj="+500">+৫০০</button>
+                        <button type="button" class="btn-adj" data-karat="18k" data-adj="-500">-৫০০</button>
+                        <button type="button" class="btn-adj" data-karat="18k" data-adj="+1000">+১০০০</button>
+                      </div>
+                    </td>
+                  </tr>
+
+                  <!-- Traditional Gold -->
+                  <tr class="rate-row-trad">
+                    <td>
+                      <div class="karat-label-cell">
+                        <span class="karat-badge bg-orange">TRAD</span>
+                        <div>
+                          <strong>সনাতন সোনা</strong>
+                          <span class="row-sub">Traditional Gold</span>
+                        </div>
+                      </div>
+                    </td>
+                    <td>
+                      <div class="input-unit-wrapper">
+                        <span class="unit-prefix">৳</span>
+                        <input type="number" id="input-gram-trad" class="admin-input rate-gram" data-karat="trad" value="9000" min="1" step="1" required>
+                      </div>
+                    </td>
+                    <td>
+                      <div class="input-unit-wrapper">
+                        <span class="unit-prefix">৳</span>
+                        <input type="number" id="input-bhori-trad" class="admin-input rate-bhori" data-karat="trad" value="105000" min="1" step="1" required>
+                      </div>
+                    </td>
+                    <td>
+                      <div class="quick-adjust-group">
+                        <button type="button" class="btn-adj" data-karat="trad" data-adj="+500">+৫০০</button>
+                        <button type="button" class="btn-adj" data-karat="trad" data-adj="-500">-৫০০</button>
+                        <button type="button" class="btn-adj" data-karat="trad" data-adj="+1000">+১০০০</button>
+                      </div>
+                    </td>
+                  </tr>
+
+                  <!-- Silver -->
+                  <tr class="rate-row-silver">
+                    <td>
+                      <div class="karat-label-cell">
+                        <span class="karat-badge bg-silver">SILVER</span>
+                        <div>
+                          <strong>রূপা (Silver)</strong>
+                          <span class="row-sub">22K Pure Silver</span>
+                        </div>
+                      </div>
+                    </td>
+                    <td>
+                      <div class="input-unit-wrapper">
+                        <span class="unit-prefix">৳</span>
+                        <input type="number" id="input-gram-silver" class="admin-input rate-gram" data-karat="silver" value="210" min="1" step="1" required>
+                      </div>
+                    </td>
+                    <td>
+                      <div class="input-unit-wrapper">
+                        <span class="unit-prefix">৳</span>
+                        <input type="number" id="input-bhori-silver" class="admin-input rate-bhori" data-karat="silver" value="2450" min="1" step="1" required>
+                      </div>
+                    </td>
+                    <td>
+                      <div class="quick-adjust-group">
+                        <button type="button" class="btn-adj" data-karat="silver" data-adj="+50">+৫০</button>
+                        <button type="button" class="btn-adj" data-karat="silver" data-adj="-50">-৫০</button>
+                        <button type="button" class="btn-adj" data-karat="silver" data-adj="+100">+১০০</button>
+                      </div>
+                    </td>
+                  </tr>
+
+                </tbody>
+              </table>
+            </div>
+
+            <div class="form-actions-bar">
+              <div class="form-actions-left">
+                <span class="note-text"><i class="fa-solid fa-circle-exclamation text-gold"></i> রেট সংরক্ষণ করলে স্বয়ংক্রিয়ভাবে মোড 'Manual' এ স্যুইচ হবে।</span>
+              </div>
+              <div class="form-actions-right">
+                <button type="button" id="btn-reset-form" class="btn btn-outline">রিসেট</button>
+                <button type="submit" id="btn-save-rates" class="btn btn-gold">
+                  <i class="fa-solid fa-floppy-disk"></i> ম্যানুয়াল রেট সংরক্ষণ করুন
+                </button>
+              </div>
+            </div>
+          </form>
+        </div>
+
+      </section>
+
+      <!-- ========================================== -->
+      <!-- TAB 2: HUB75 LED MATRIX SIMULATOR -->
+      <!-- ========================================== -->
+      <section id="tab-simulator" class="tab-pane">
+        <div class="card">
+          <div class="card-header-flex">
+            <div>
+              <h3 class="card-title"><i class="fa-solid fa-tv text-gold"></i> HUB75 RGB LED Matrix 64x32 লাইভ সিমুলেটর</h3>
+              <p class="card-subtitle">আপনার ফিজিক্যাল LED ডিসপ্লে বোর্ডে রেটগুলো কীভাবে প্রদর্শিত হবে তা এখানে সরাসরি দেখুন।</p>
+            </div>
+            <div class="sim-controls">
+              <button id="btn-sim-toggle" class="btn btn-outline-sm"><i class="fa-solid fa-pause"></i> পজ / প্লে</button>
+              <button id="btn-sim-speed" class="btn btn-outline-sm"><i class="fa-solid fa-gauge-high"></i> স্পিড পরিবর্তন</button>
+            </div>
+          </div>
+
+          <!-- Virtual Matrix Board Frame -->
+          <div class="matrix-board-frame">
+            <div class="matrix-screws top-left"></div>
+            <div class="matrix-screws top-right"></div>
+            <div class="matrix-screws bottom-left"></div>
+            <div class="matrix-screws bottom-right"></div>
+
+            <div class="matrix-display-screen" id="matrix-display">
+              <div class="matrix-header-line">
+                <span class="m-gold-text">TODAY'S GOLD RATE</span>
+                <span class="m-time" id="sim-time">14:30</span>
+              </div>
+              <div class="matrix-content-scroll">
+                <div class="matrix-item active-frame" id="sim-slide">
+                  <div class="sim-karat" id="sim-karat-title">22K GOLD</div>
+                  <div class="sim-price-row">
+                    <span class="sim-unit">1 BHORI:</span>
+                    <span class="sim-val" id="sim-price-val">৳ 169,000</span>
+                  </div>
+                </div>
+              </div>
+              <div class="matrix-footer-line">
+                <span class="m-sub" id="sim-footer-text">21K: 161,000 | 18K: 137,000 | SILVER: 2,450</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="matrix-info-grid">
+            <div class="mini-stat-card">
+              <span class="stat-lbl">ডিসপ্লে টাইপ</span>
+              <strong class="stat-val">64x32 RGB HUB75 DMA</strong>
+            </div>
+            <div class="mini-stat-card">
+              <span class="stat-lbl">পোলিং ইন্টারভাল</span>
+              <strong class="stat-val">প্রতি ৬০ সেকেন্ড</strong>
+            </div>
+            <div class="mini-stat-card">
+              <span class="stat-lbl">রঙিন স্কিম</span>
+              <strong class="stat-val">Gold (22K) / Cyan (21K) / Pink (18K)</strong>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ========================================== -->
+      <!-- TAB 3: CONNECTED ESP32 DEVICES MONITOR -->
+      <!-- ========================================== -->
+      <section id="tab-devices" class="tab-pane">
+        <div class="card">
+          <div class="card-header-flex">
+            <div>
+              <h3 class="card-title"><i class="fa-solid fa-network-wired text-gold"></i> সংযুক্ত ESP32 ম্যাট্রিক্স ডিভাইস মনিটর</h3>
+              <p class="card-subtitle">যেসব ESP32 বোর্ড `/api/rates` বা `/api/devices/ping` এ সংযোগ করেছে তাদের তালিকা।</p>
+            </div>
+            <button id="btn-refresh-devices" class="btn btn-outline-sm">
+              <i class="fa-solid fa-arrows-rotate"></i> রিফ্রেশ
+            </button>
+          </div>
+
+          <div class="table-responsive">
+            <table class="admin-rates-table" id="devices-table">
+              <thead>
+                <tr>
+                  <th>ডিভাইস আইডি</th>
+                  <th>IP অ্যাড্রেস</th>
+                  <th>User-Agent / ফার্মওয়্যার</th>
+                  <th>অনুরোধ সংখ্যা</th>
+                  <th>সর্বশেষ সক্রিয়</th>
+                  <th>স্ট্যাটাস</th>
+                </tr>
+              </thead>
+              <tbody id="devices-table-body">
+                <tr>
+                  <td colspan="6" class="text-center">ডিভাইস খোঁজা হচ্ছে...</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ========================================== -->
+      <!-- TAB 4: API ENDPOINT & JSON PREVIEW -->
+      <!-- ========================================== -->
+      <section id="tab-api" class="tab-pane">
+        <div class="card">
+          <h3 class="card-title"><i class="fa-solid fa-terminal text-gold"></i> সেন্ট্রালাইজড ESP32 JSON API এন্ডপয়েন্ট</h3>
+          <p class="card-subtitle">আপনার ESP32 HUB75 ফার্মওয়্যার কোডের <code>RATE_SERVER_URL</code> এ সরাসরি নিচের URL টি ব্যবহার করুন:</p>
+
+          <div class="api-box-admin">
+            <div class="api-url-bar">
+              <span class="http-method">GET</span>
+              <input type="text" id="admin-api-endpoint" class="admin-url-input" readonly value="">
+              <button id="btn-admin-copy-url" class="btn btn-gold btn-sm"><i class="fa-solid fa-copy"></i> কপি URL</button>
+            </div>
+
+            <div class="json-viewer-header">
+              <span>রিয়েল-টাইম রেসপন্স পে-লোড (Current Live JSON Output):</span>
+              <button id="btn-copy-json" class="btn-text"><i class="fa-solid fa-copy"></i> JSON কপি করুন</button>
+            </div>
+
+            <pre class="json-code-box" id="admin-json-viewer"><code>{
+  "source": "auto",
+  "updated": "2026-10-05 14:30",
+  "rates": {
+    "gram": { "22k": 14500, "21k": 13800, "18k": 11800, "silver": 210, "trad": 9000 },
+    "bhori": { "22k": 169000, "21k": 161000, "18k": 137000, "silver": 2450, "trad": 105000 }
+  }
+}</code></pre>
+          </div>
+        </div>
+      </section>
+
+      <!-- ========================================== -->
+      <!-- TAB 5: SERVER SETTINGS & PASSWORD -->
+      <!-- ========================================== -->
+      <section id="tab-settings" class="tab-pane">
+        <div class="card">
+          <h3 class="card-title"><i class="fa-solid fa-gear text-gold"></i> সার্ভার ও সিকিউরিটি সেটিংস</h3>
+          <p class="card-subtitle">পাসওয়ার্ড পরিবর্তন ও অটো-সিঙ্ক কনফিগারেশন</p>
+
+          <form id="form-admin-settings" class="settings-form">
+            <div class="form-group">
+              <label for="set-sync-interval">অটো-সিঙ্ক বিরতি (মিনিট)</label>
+              <input type="number" id="set-sync-interval" class="form-input" value="15" min="1" max="1440">
+              <span class="help-text">অনলাইন সোর্স থেকে প্রতি কত মিনিট পর পর রেট হালনাগাদ হবে।</span>
+            </div>
+
+            <div class="form-group">
+              <label for="set-upstream-url">আপস্ট্রিম সোর্স URL</label>
+              <input type="url" id="set-upstream-url" class="form-input" value="https://www.goldr.org/price.ultra.js">
+              <span class="help-text">ডিফল্ট: https://www.goldr.org/price.ultra.js</span>
+            </div>
+
+            <div class="form-group">
+              <label for="set-new-pwd">নতুন অ্যাডমিন পাসওয়ার্ড</label>
+              <input type="password" id="set-new-pwd" class="form-input" placeholder="পরিবর্তন না করতে চাইলে ফাঁকা রাখুন">
+            </div>
+
+            <button type="submit" class="btn btn-gold" id="btn-save-settings">
+              <i class="fa-solid fa-check"></i> সেটিংস সংরক্ষণ করুন
+            </button>
+          </form>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- Toast Notification -->
+  <div id="admin-toast" class="toast">
+    <i class="fa-solid fa-check-circle"></i>
+    <span id="admin-toast-msg">সফল হয়েছে</span>
+  </div>
+
+  <!-- Admin JS -->
+  <script src="/js/admin.js"></script>
+</body>
+</html>

@@ -1,0 +1,29 @@
+{
+  "name": "gold-rate-middleman-server",
+  "version": "1.0.0",
+  "description": "Gold Rate Middleman Server with Bengali UI, Admin Panel, and Centralized JSON API for ESP32 HUB75 Matrix Boards",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js"
+  },
+  "keywords": [
+    "gold-rate",
+    "esp32",
+    "hub75",
+    "bengali",
+    "bajus",
+    "goldr",
+    "middleman-server",
+    "iot"
+  ],
+  "author": "Antigravity",
+  "license": "MIT",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.21.2",
+    "express-rate-limit": "^7.5.0",
+    "jsonwebtoken": "^9.0.2",
+    "cookie-parser": "^1.4.7"
+  }
+}

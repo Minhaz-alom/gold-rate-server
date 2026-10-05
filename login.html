@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>অ্যাডমিন লগইন | Gold Rate Middleman Server</title>
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="stylesheet" href="/css/admin.css">
+</head>
+<body class="login-body">
+
+  <div class="ambient-glow glow-top-left"></div>
+  <div class="ambient-glow glow-bottom-right"></div>
+
+  <div class="login-container">
+    <div class="login-card">
+      <div class="login-header">
+        <div class="login-logo">
+          <i class="fa-solid fa-shield-halved"></i>
+        </div>
+        <h2>অ্যাডমিন প্যানেল লগইন</h2>
+        <p class="login-subtitle">Gold Rate Middleman & ESP32 Server Manager</p>
+      </div>
+
+      <div id="login-alert" class="alert alert-error" style="display: none;">
+        <i class="fa-solid fa-triangle-exclamation"></i>
+        <span id="alert-msg">পাসওয়ার্ড ভুল হয়েছে</span>
+      </div>
+
+      <form id="login-form">
+        <div class="form-group">
+          <label for="username"><i class="fa-solid fa-user"></i> ইউজারনেম</label>
+          <input type="text" id="username" class="form-input" value="admin" required placeholder="admin">
+        </div>
+
+        <div class="form-group">
+          <label for="password"><i class="fa-solid fa-lock"></i> পাসওয়ার্ড</label>
+          <div class="input-password-wrapper">
+            <input type="password" id="password" class="form-input" required placeholder="পাসওয়ার্ড লিখুন (Default: admin123)">
+            <button type="button" id="btn-toggle-pwd" class="btn-toggle-eye"><i class="fa-solid fa-eye"></i></button>
+          </div>
+        </div>
+
+        <button type="submit" class="btn btn-gold btn-block" id="btn-login-submit">
+          <i class="fa-solid fa-right-to-bracket"></i> লগইন করুন
+        </button>
+      </form>
+
+      <div class="login-footer">
+        <a href="/" class="link-home"><i class="fa-solid fa-arrow-left"></i> সাধারণ গ্রাহক পেজে ফিরুন</a>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const form = document.getElementById('login-form');
+    const alertBox = document.getElementById('login-alert');
+    const alertMsg = document.getElementById('alert-msg');
+    const toggleEye = document.getElementById('btn-toggle-pwd');
+    const pwdInput = document.getElementById('password');
+
+    toggleEye.addEventListener('click', () => {
+      if (pwdInput.type === 'password') {
+        pwdInput.type = 'text';
+        toggleEye.innerHTML = '<i class="fa-solid fa-eye-slash"></i>';
+      } else {
+        pwdInput.type = 'password';
+        toggleEye.innerHTML = '<i class="fa-solid fa-eye"></i>';
+      }
+    });
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const username = document.getElementById('username').value.trim();
+      const password = pwdInput.value;
+      const btn = document.getElementById('btn-login-submit');
+
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> যাচাই হচ্ছে...';
+      alertBox.style.display = 'none';
+
+      try {
+        const res = await fetch('/api/admin/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, password })
+        });
+        const data = await res.json();
+
+        if (res.ok && data.success) {
+          window.location.href = '/admin';
+        } else {
+          alertMsg.textContent = data.error || 'ইউজারনেম বা পাসওয়ার্ড সঠিক নয়';
+          alertBox.style.display = 'flex';
+          btn.disabled = false;
+          btn.innerHTML = '<i class="fa-solid fa-right-to-bracket"></i> লগইন করুন';
+        }
+      } catch (err) {
+        alertMsg.textContent = 'সার্ভারে সংযোগ করা যাচ্ছে না';
+        alertBox.style.display = 'flex';
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fa-solid fa-right-to-bracket"></i> লগইন করুন';
+      }
+    });
+  </script>
+</body>
+</html>

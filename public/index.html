@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>আজকের সোনার দাম বাংলাদেশ | Today's Gold Rate in Bangladesh</title>
+  <meta name="description" content="বাংলাদেশে আজকের ২২ ক্যারেট, ২১ ক্যারেট, ১৮ ক্যারেট ও সনাতন সোনার সঠিক ও সর্বশেষ বাজারদর। প্রতি গ্রাম ও ভরি হিসেবে সোনার দাম ও লাইভ ক্যালকুলেটর।">
+  <meta name="keywords" content="সোনার দাম বাংলাদেশ, আজকের সোনার দাম, bajus gold price, 22k gold price bangladesh, 21k gold rate, esp32 gold matrix, goldr api">
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+  <!-- Main Custom CSS -->
+  <link rel="stylesheet" href="./css/style.css">
+
+  <!-- Mandatory External Ultra Price Script -->
+  <script async src="https://www.goldr.org/price.ultra.js"></script>
+</head>
+<body class="theme-dark">
+
+  <!-- Ambient Glow Background -->
+  <div class="ambient-glow glow-top-left"></div>
+  <div class="ambient-glow glow-bottom-right"></div>
+
+  <!-- Top Navigation Header -->
+  <header class="site-header">
+    <div class="container header-container">
+      <div class="brand-logo">
+        <div class="logo-icon">
+          <i class="fa-solid fa-coins"></i>
+        </div>
+        <div class="brand-text">
+          <span class="brand-title">স্বর্ণ মূল্য সেবা</span>
+          <span class="brand-subtitle">Bangladesh Gold & Matrix Middleman</span>
+        </div>
+      </div>
+
+      <nav class="header-nav">
+        <a href="#rates-section" class="nav-link"><i class="fa-solid fa-chart-line"></i> রেট চার্ট</a>
+        <a href="#calculator-section" class="nav-link"><i class="fa-solid fa-calculator"></i> ক্যালকুলেটর</a>
+        <a href="https://www.goldr.org/api-documentation/" target="_blank" rel="noopener" class="nav-link nav-highlight">
+          <i class="fa-solid fa-code"></i> API Doc
+        </a>
+        <button id="btn-api-modal" class="btn btn-outline" title="ESP32 API & Matrix Setup">
+          <i class="fa-solid fa-microchip"></i> ESP32 API
+        </button>
+        <a href="./admin.html" class="btn btn-gold" title="Admin Control Panel">
+          <i class="fa-solid fa-shield-halved"></i> অ্যাডমিন প্যানেল
+        </a>
+      </nav>
+    </div>
+  </header>
+
+  <!-- Live Status Bar -->
+  <section class="ticker-bar">
+    <div class="container ticker-container">
+      <div class="ticker-badge">
+        <span class="live-dot"></span>
+        <span class="badge-text">লাইভ মার্কেট আপডেট</span>
+      </div>
+      <div class="ticker-info">
+        <span class="info-item"><i class="fa-regular fa-clock"></i> সর্বশেষ আপডেট: <strong id="header-update-time">যাচাই হচ্ছে...</strong></span>
+        <span class="info-divider">|</span>
+        <span class="info-item"><i class="fa-solid fa-server"></i> উৎস মোড: <span id="header-mode-badge" class="badge-pill">অটো সিঙ্ক</span></span>
+        <span class="info-divider">|</span>
+        <span class="info-item"><i class="fa-solid fa-wifi"></i> ESP32 HUB75 সিঙ্ক: <strong class="text-emerald">সক্রিয়</strong></span>
+      </div>
+      <div class="ticker-action">
+        <button id="btn-refresh-rates" class="btn-icon" title="হালনাগাদ করুন"><i class="fa-solid fa-arrows-rotate"></i></button>
+      </div>
+    </div>
+  </section>
+
+  <!-- Main Hero Section -->
+  <main class="main-content">
+    <div class="container">
+
+      <!-- Hero Heading -->
+      <div class="hero-section">
+        <div class="hero-badge">
+          <i class="fa-solid fa-gem"></i> বাংলাদেশ জুয়েলার্স অ্যাসোসিয়েশন (বাজুস) বাজারদর
+        </div>
+        <h1 class="hero-title">আজকের সোনার দাম বাংলাদেশ</h1>
+        <p class="hero-subtitle">
+          আন্তর্জাতিক ও স্থানীয় বাজারদরের ভিত্তিতে রিয়েল-টাইম সোনার নির্ভরযোগ্য রেট। সকল জুয়েলার্স ও ESP32 HUB75 LED ডিসপ্লে বোর্ডের জন্য সেন্ট্রালাইজড সার্ভার।
+        </p>
+      </div>
+
+      <!-- Feature Highlight Cards -->
+      <section class="key-highlights-section">
+        <div class="section-header-mini">
+          <h2><i class="fa-solid fa-star text-gold"></i> বিশেষ নির্ধারিত দর (Key Metrics)</h2>
+          <span class="sub-text">স্বর্ণক্রয় ও পাইকারি পরিমাপ অনুযায়ী রিয়েল-টাইম হিসাব</span>
+        </div>
+
+        <div class="highlight-grid">
+
+          <!-- 22K 50 Gram Price Card -->
+          <div class="highlight-card premium-card">
+            <div class="card-glow"></div>
+            <div class="card-header">
+              <span class="tag tag-gold">২২ ক্যারেট</span>
+              <span class="unit-badge">৫০ গ্রাম ক্রয়মূল্য</span>
+            </div>
+            <div class="card-body">
+              <div class="rate-price-large">
+                <span class="currency">৳</span>
+                <i data="22k-50gram-dam" class="rate-value dynamic-rate">লোড হচ্ছে...</i>
+              </div>
+              <div class="rate-details">
+                <span><i class="fa-solid fa-scale-balanced"></i> ওজন: ৫০ গ্রাম (Gold Purchase)</span>
+                <span class="status-ok"><i class="fa-solid fa-circle-check"></i> ক্যাডমিয়াম হলমার্ক</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- 22K 1 Bhori Sale Price Card -->
+          <div class="highlight-card premium-card">
+            <div class="card-glow"></div>
+            <div class="card-header">
+              <span class="tag tag-gold">২২ ক্যারেট</span>
+              <span class="unit-badge">১ ভরি বিক্রয়মূল্য</span>
+            </div>
+            <div class="card-body">
+              <div class="rate-price-large">
+                <span class="currency">৳</span>
+                <i data="22k-1bhori-dam" class="rate-value dynamic-rate">লোড হচ্ছে...</i>
+              </div>
+              <div class="rate-details">
+                <span><i class="fa-solid fa-coins"></i> ১ ভরি = ১১.৬৬৪ গ্রাম</span>
+                <span class="sale-badge"><i data="22k-1bhori-sell" class="sub-sell-rate">বিক্রয় রেট</i></span>
+              </div>
+            </div>
+          </div>
+
+          <!-- 21K 7 Ana Price Card -->
+          <div class="highlight-card premium-card">
+            <div class="card-glow"></div>
+            <div class="card-header">
+              <span class="tag tag-blue">২১ ক্যারেট</span>
+              <span class="unit-badge">৭ আনা ক্রয়মূল্য</span>
+            </div>
+            <div class="card-body">
+              <div class="rate-price-large">
+                <span class="currency">৳</span>
+                <i data="21k-7ana-dam" class="rate-value dynamic-rate">লোড হচ্ছে...</i>
+              </div>
+              <div class="rate-details">
+                <span><i class="fa-solid fa-weight-scale"></i> ওজন: ৭ আনা (১ ভরি = ১৬ আনা)</span>
+                <span class="status-ok"><i class="fa-solid fa-circle-check"></i> ২১K হলমার্ক</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- 21K 1 KG Sale Price Card -->
+          <div class="highlight-card premium-card">
+            <div class="card-glow"></div>
+            <div class="card-header">
+              <span class="tag tag-blue">২১ ক্যারেট</span>
+              <span class="unit-badge">১ কেজি বিক্রয়মূল্য</span>
+            </div>
+            <div class="card-body">
+              <div class="rate-price-large">
+                <span class="currency">৳</span>
+                <i data="21k-1kg-dam" class="rate-value dynamic-rate">লোড হচ্ছে...</i>
+              </div>
+              <div class="rate-details">
+                <span><i class="fa-solid fa-box"></i> ১ কেজি = ১০০০ গ্রাম (বুলিয়ন বার)</span>
+                <span class="sale-badge"><i data="21k-1kg-sell" class="sub-sell-rate">পাইকারি রেট</i></span>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- Complete Rates Table Section -->
+      <section id="rates-section" class="rates-overview-section">
+        <div class="section-header">
+          <div>
+            <h2 class="section-title"><i class="fa-solid fa-table-list text-gold"></i> স্বর্ণ ও রৌপ্যের পূর্ণাঙ্গ মূল্য তালিকা</h2>
+            <p class="section-desc">সকল ক্যারেটের ভরি ও গ্রাম প্রতি সর্বশেষ দামের বিস্তারিত বিবরণী</p>
+          </div>
+          <div class="table-actions">
+            <button id="btn-print-rates" class="btn btn-outline-sm"><i class="fa-solid fa-print"></i> রেট প্রিন্ট</button>
+            <button id="btn-copy-rates" class="btn btn-outline-sm"><i class="fa-solid fa-copy"></i> কপি করুন</button>
+          </div>
+        </div>
+
+        <div class="table-responsive">
+          <table class="luxury-table" id="gold-rates-table">
+            <thead>
+              <tr>
+                <th>স্বর্ণ / ধাতুর বিবরণ</th>
+                <th>ক্যারেট কোড</th>
+                <th>প্রতি গ্রাম (১ গ্রাম)</th>
+                <th>প্রতি ভরি (১ ভরি / ১১.৬৬৪ গ্রাম)</th>
+                <th>৮ আনা (অর্ধ ভরি)</th>
+                <th>১০ গ্রাম (ক্যাড)</th>
+              </tr>
+            </thead>
+            <tbody>
+              <!-- 22 Karat Row -->
+              <tr class="highlight-row">
+                <td>
+                  <div class="metal-cell">
+                    <span class="metal-icon gold-grad"><i class="fa-solid fa-crown"></i></span>
+                    <div>
+                      <strong class="metal-name">২২ ক্যারেট সোনা (হলমার্ক)</strong>
+                      <span class="metal-sub">৯১.৬% খাঁটি স্বর্ণ (22K Cadmium)</span>
+                    </div>
+                  </div>
+                </td>
+                <td><span class="badge-karat badge-22k">22K</span></td>
+                <td><strong class="price-text">৳ <i data="22k-1gram-dam" class="dynamic-rate">---</i></strong></td>
+                <td><strong class="price-text-primary">৳ <i data="22k-1bhori-dam" class="dynamic-rate">---</i></strong></td>
+                <td>৳ <i data="22k-8ana-dam" class="dynamic-rate">---</i></td>
+                <td>৳ <i data="22k-10gram-dam" class="dynamic-rate">---</i></td>
+              </tr>
+
+              <!-- 21 Karat Row -->
+              <tr>
+                <td>
+                  <div class="metal-cell">
+                    <span class="metal-icon gold-21"><i class="fa-solid fa-gem"></i></span>
+                    <div>
+                      <strong class="metal-name">২১ ক্যারেট সোনা (হলমার্ক)</strong>
+                      <span class="metal-sub">৮৭.৫% খাঁটি স্বর্ণ (21K Cadmium)</span>
+                    </div>
+                  </div>
+                </td>
+                <td><span class="badge-karat badge-21k">21K</span></td>
+                <td><strong class="price-text">৳ <i data="21k-1gram-dam" class="dynamic-rate">---</i></strong></td>
+                <td><strong class="price-text-primary">৳ <i data="21k-1bhori-dam" class="dynamic-rate">---</i></strong></td>
+                <td>৳ <i data="21k-8ana-dam" class="dynamic-rate">---</i></td>
+                <td>৳ <i data="21k-10gram-dam" class="dynamic-rate">---</i></td>
+              </tr>
+
+              <!-- 18 Karat Row -->
+              <tr>
+                <td>
+                  <div class="metal-cell">
+                    <span class="metal-icon gold-18"><i class="fa-solid fa-ring"></i></span>
+                    <div>
+                      <strong class="metal-name">১৮ ক্যারেট সোনা (হলমার্ক)</strong>
+                      <span class="metal-sub">৭৫.০% খাঁটি স্বর্ণ (18K Jewelry Gold)</span>
+                    </div>
+                  </div>
+                </td>
+                <td><span class="badge-karat badge-18k">18K</span></td>
+                <td><strong class="price-text">৳ <i data="18k-1gram-dam" class="dynamic-rate">---</i></strong></td>
+                <td><strong class="price-text-primary">৳ <i data="18k-1bhori-dam" class="dynamic-rate">---</i></strong></td>
+                <td>৳ <i data="18k-8ana-dam" class="dynamic-rate">---</i></td>
+                <td>৳ <i data="18k-10gram-dam" class="dynamic-rate">---</i></td>
+              </tr>
+
+              <!-- Traditional Gold Row -->
+              <tr>
+                <td>
+                  <div class="metal-cell">
+                    <span class="metal-icon gold-trad"><i class="fa-solid fa-certificate"></i></span>
+                    <div>
+                      <strong class="metal-name">সনাতন পদ্ধতির সোনা</strong>
+                      <span class="metal-sub">ঐতিহ্যবাহী সনাতন স্বর্ণ (Traditional Gold)</span>
+                    </div>
+                  </div>
+                </td>
+                <td><span class="badge-karat badge-trad">TRAD</span></td>
+                <td><strong class="price-text">৳ <i data="old-1gram-dam" class="dynamic-rate">---</i></strong></td>
+                <td><strong class="price-text-primary">৳ <i data="old-1bhori-dam" class="dynamic-rate">---</i></strong></td>
+                <td>৳ <i data="old-8ana-dam" class="dynamic-rate">---</i></td>
+                <td>৳ <i data="old-10gram-dam" class="dynamic-rate">---</i></td>
+              </tr>
+
+              <!-- Silver Row -->
+              <tr>
+                <td>
+                  <div class="metal-cell">
+                    <span class="metal-icon silver-grad"><i class="fa-solid fa-cubes-stacked"></i></span>
+                    <div>
+                      <strong class="metal-name">রূপা (ক্যাডমিয়াম হলমার্ক)</strong>
+                      <span class="metal-sub">২২ ক্যারেট মানসম্মত খাঁটি রূপা (Pure Silver)</span>
+                    </div>
+                  </div>
+                </td>
+                <td><span class="badge-karat badge-silver">SILVER</span></td>
+                <td><strong class="price-text">৳ <span id="silver-gram-val">২১০</span></strong></td>
+                <td><strong class="price-text-primary">৳ <span id="silver-bhori-val">২,৪৫০</span></strong></td>
+                <td>৳ <span id="silver-half-val">১,২২৫</span></td>
+                <td>৳ <span id="silver-10g-val">২,১০০</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="table-footer-note">
+          <p><i class="fa-solid fa-circle-info text-gold"></i> উল্লিখিত দাম বাংলাদেশ জুয়েলার্স অ্যাসোসিয়েশন (বাজুস) নির্ধারিত বেঞ্চমার্ক দর। গহনা ক্রয়ের সময় মজুরি (Making Charge) ও সরকারি ভ্যাট (৫%) প্রযোজ্য হবে।</p>
+        </div>
+      </section>
+
+      <!-- Interactive Gold Price Calculator Section -->
+      <section id="calculator-section" class="calculator-section">
+        <div class="calculator-card">
+          <div class="calc-header">
+            <div class="calc-title">
+              <i class="fa-solid fa-calculator text-gold"></i>
+              <h3>স্বর্ণের মূল্য ও গহনার হিসাব ক্যালকুলেটর</h3>
+            </div>
+            <span class="calc-badge">স্মার্ট ভ্যাট ও মজুরি হিসাব</span>
+          </div>
+
+          <div class="calc-grid">
+            <div class="calc-form">
+              <div class="form-group">
+                <label for="calc-karat">ক্যারেট নির্বাচন করুন</label>
+                <select id="calc-karat" class="form-select">
+                  <option value="22k">২২ ক্যারেট (22 Karat Gold)</option>
+                  <option value="21k">২১ ক্যারেট (21 Karat Gold)</option>
+                  <option value="18k">১৮ ক্যারেট (18 Karat Gold)</option>
+                  <option value="trad">সনাতন পদ্ধতি (Traditional)</option>
+                  <option value="silver">রূপা (Silver 22K)</option>
+                </select>
+              </div>
+
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="calc-unit">পরিমাপের একক</label>
+                  <select id="calc-unit" class="form-select">
+                    <option value="bhori">ভরি (Bhori)</option>
+                    <option value="gram">গ্রাম (Gram)</option>
+                    <option value="ana">আনা (Ana)</option>
+                    <option value="rati">রতি (Ratti)</option>
+                    <option value="point">পয়েন্ট (Point)</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label for="calc-weight">ওজন / পরিমাণ</label>
+                  <input type="number" id="calc-weight" class="form-input" value="1" min="0.01" step="any" placeholder="ওজন লিখুন">
+                </div>
+              </div>
+
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="calc-making">মজুরি (প্রতি ভরি / গ্রাম)</label>
+                  <input type="number" id="calc-making" class="form-input" value="3500" placeholder="মজুরি ৳">
+                </div>
+                <div class="form-group">
+                  <label for="calc-vat">সরকারি ভ্যাট (%)</label>
+                  <input type="number" id="calc-vat" class="form-input" value="5" placeholder="ভ্যাট %">
+                </div>
+              </div>
+            </div>
+
+            <div class="calc-result-box">
+              <h4 class="result-box-title">মোট মূল্য বিবরণী</h4>
+              
+              <div class="result-breakdown">
+                <div class="result-row">
+                  <span>স্বর্ণের মূল দাম:</span>
+                  <strong id="res-base-price">৳ ০</strong>
+                </div>
+                <div class="result-row">
+                  <span>মোট মজুরি (Making Charge):</span>
+                  <strong id="res-making-price">৳ ০</strong>
+                </div>
+                <div class="result-row">
+                  <span>ভ্যাট (VAT):</span>
+                  <strong id="res-vat-price">৳ ০</strong>
+                </div>
+                <div class="result-divider"></div>
+                <div class="result-total-row">
+                  <span>সর্বমোট প্রদেয় মূল্য:</span>
+                  <div class="total-badge">
+                    <strong id="res-total-price">৳ ০</strong>
+                  </div>
+                </div>
+              </div>
+
+              <div class="calc-unit-converter">
+                <span class="converter-label">সমতুল্য ওজন:</span>
+                <div class="converter-tags">
+                  <span id="conv-bhori" class="conv-tag">১ ভরি</span>
+                  <span id="conv-gram" class="conv-tag">১১.৬৬৪ গ্রাম</span>
+                  <span id="conv-ana" class="conv-tag">১৬ আনা</span>
+                  <span id="conv-rati" class="conv-tag">৯৬ রতি</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ESP32 Hardware Integration Info & API Banner -->
+      <section class="esp32-banner-section">
+        <div class="esp32-card">
+          <div class="esp32-content">
+            <div class="esp32-icon">
+              <i class="fa-solid fa-microchip"></i>
+            </div>
+            <div class="esp32-text">
+              <h3>ESP32 HUB75 LED Matrix ডিসপ্লে সার্ভার সাপোর্ট</h3>
+              <p>সকল ধরণের HUB75 RGB LED প্যানেল সরাসরি আমাদের সেন্ট্রালাইজড JSON এন্ডপয়েন্ট থেকে স্বয়ংক্রিয়ভাবে রেট আপডেট পায়। ম্যানুয়াল মোড ও অটো ফেচিং সাপোর্ট সহ সম্পূর্ণ স্থিতিশীল।</p>
+            </div>
+          </div>
+          <div class="esp32-actions">
+            <button id="btn-view-api-card" class="btn btn-gold">
+              <i class="fa-solid fa-terminal"></i> API Endpoint দেখুন
+            </button>
+            <a href="https://www.goldr.org/api-documentation/" target="_blank" rel="noopener" class="btn btn-outline">
+              <i class="fa-solid fa-book-bookmark"></i> Goldr Docs
+            </a>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </main>
+
+  <!-- API Explorer & ESP32 Integration Modal -->
+  <div class="modal-overlay" id="api-modal">
+    <div class="modal-card">
+      <div class="modal-header">
+        <div class="modal-title">
+          <i class="fa-solid fa-network-wired text-gold"></i>
+          <h3>ESP32 ও ডেভেলপার API ইন্টিগ্রেশন</h3>
+        </div>
+        <button class="modal-close" id="btn-close-modal"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+
+      <div class="modal-body">
+        <p class="modal-desc">আপনার ESP32 HUB75 বোর্ড বা মোবাইল অ্যাপের জন্য নিচের সেন্ট্রালাইজড JSON API এন্ডপয়েন্টটি ব্যবহার করুন:</p>
+
+        <div class="api-url-box">
+          <label class="url-label">ESP32 RATE_SERVER_URL Endpoint:</label>
+          <div class="url-input-group">
+            <input type="text" id="public-api-url" class="url-input" readonly value="">
+            <button id="btn-copy-api-url" class="btn btn-gold btn-sm"><i class="fa-solid fa-copy"></i> কপি</button>
+          </div>
+        </div>
+
+        <div class="api-payload-box">
+          <div class="payload-header">
+            <span>সেন্ট্রালাইজড JSON স্ট্রাকচার রেসপন্স:</span>
+            <span class="badge-fast"><i class="fa-solid fa-bolt"></i> 200 OK</span>
+          </div>
+          <pre class="code-preview" id="live-json-preview"><code>{
+  "source": "auto",
+  "updated": "2026-10-05 14:30",
+  "rates": {
+    "gram": { "22k": 14500, "21k": 13800, "18k": 11800, "silver": 210, "trad": 9000 },
+    "bhori": { "22k": 169000, "21k": 161000, "18k": 137000, "silver": 2450, "trad": 105000 }
+  }
+}</code></pre>
+        </div>
+
+        <div class="api-quick-links">
+          <span>অফিসিয়াল ডকুমেন্টেশন লিংক:</span>
+          <a href="https://www.goldr.org/api-documentation/" target="_blank" rel="noopener" class="link-doc">
+            <i class="fa-solid fa-arrow-up-right-from-square"></i> https://www.goldr.org/api-documentation/
+          </a>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn btn-outline" id="btn-modal-done">বন্ধ করুন</button>
+        <a href="./admin.html" class="btn btn-gold"><i class="fa-solid fa-gear"></i> অ্যাডমিন কন্ট্রোল</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification -->
+  <div id="toast" class="toast">
+    <i class="fa-solid fa-check-circle"></i>
+    <span id="toast-msg">সফল হয়েছে</span>
+  </div>
+
+  <!-- Footer -->
+  <footer class="site-footer">
+    <div class="container footer-container">
+      <div class="footer-left">
+        <p>© 2026 <strong>স্বর্ণ মূল্য সেবা বাংলাদেশ</strong> — All Rights Reserved.</p>
+        <p class="footer-sub">সেন্ট্রালাইজড গোল্ড রেট মিডলম্যান সার্ভার ও ESP32 HUB75 LED কন্ট্রোলার।</p>
+      </div>
+      <div class="footer-right">
+        <a href="https://www.goldr.org/api-documentation/" target="_blank" rel="noopener" class="footer-link">API Documentation</a>
+        <span class="footer-sep">•</span>
+        <a href="./admin.html" class="footer-link">Admin Panel</a>
+        <span class="footer-sep">•</span>
+        <a href="./api/rates.json" target="_blank" class="footer-link">Live JSON</a>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Frontend JS Logic -->
+  <script src="./js/app.js"></script>
+</body>
+</html>
